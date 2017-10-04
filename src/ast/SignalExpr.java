@@ -20,7 +20,7 @@ public class SignalExpr extends Expr {
     }
 
     @Override
-	public Type getType() {
+    public Type getType() {
        return expr.getType();
     }
 

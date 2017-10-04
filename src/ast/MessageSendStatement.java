@@ -11,6 +11,11 @@ public class MessageSendStatement extends Statement {
 
    private MessageSend  messageSend;
 
+    @Override
+    public void genKra(PW pw) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
 }
 
 

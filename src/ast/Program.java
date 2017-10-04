@@ -15,9 +15,6 @@ public class Program {
 
 	public void genKra(PW pw) {
 	}
-
-	public void genC(PW pw) {
-	}
 	
 	public ArrayList<KraClass> getClassList() {
 		return classList;
