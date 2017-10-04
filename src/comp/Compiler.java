@@ -177,18 +177,41 @@ public class Compiler {
 
 	private void instanceVarDec(Type type, String name) {
 		// InstVarDec ::= [ "static" ] "private" Type IdList ";"
-                            
+                    
                 this.currentClass.addInstanceVariable(new InstanceVariable(name, type));
+                
+                 if (this.symbolTable.getInLocal(name) != null){
+                    this.signalError.showError("Variable '" + name 
+                                               + "' is being redefined");
+                }
+                    
+                InstanceVariable iv = new InstanceVariable(name, type);
+
+                this.symbolTable.putInLocal(iv.getName(), iv);
+                
+ 
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			String variableName = lexer.getStringValue();
-                        this.currentClass.addInstanceVariable(new InstanceVariable(variableName, type));
+                        
+                        InstanceVariable ivr = new InstanceVariable(variableName, type);
+                        
+                        this.currentClass.addInstanceVariable(ivr);
+                        
+                        if (this.symbolTable.getInLocal(variableName) != null){
+                            this.signalError.showError("Variable '" + variableName
+                                               + "' is being redefined");
+                        }
+                        
+                        this.symbolTable.putInLocal(ivr.getName(), ivr);
+                        
 			lexer.nextToken();
 		}
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
+                
 		lexer.nextToken();
                 
 	}
@@ -200,6 +223,23 @@ public class Compiler {
 		 */
                 
                 this.currentMethod = new MethodDec(name, type, qualifier);
+                
+                Variable varMethodCurrent = new Variable (name, type);
+                
+                if (this.symbolTable.getInLocal(varMethodCurrent.getName()) != null){
+                    this.signalError.showError("Method '" + this.currentMethod.getName() 
+                                               + "' is being redefined");
+                }
+                
+                if (name.equals("run") && qualifier == Symbol.PRIVATE){
+                    this.signalError.showError("Method '" + this.currentMethod.getName() 
+                                               + "' of class '" 
+                                               + this.currentClass.getName()
+                                               + "' cannot be private");
+                }
+                    
+                
+                this.symbolTable.putInLocal(varMethodCurrent.getName(), varMethodCurrent);
                 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.RIGHTPAR ) formalParamDec();
@@ -214,6 +254,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
+                
                 
                 this.currentClass.addMethod(this.currentMethod);
                 
@@ -561,11 +602,12 @@ public class Compiler {
 	private WriteStatement writeStatement() {
 
                 ExprList ex = new ExprList();
-            
+                
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
 		ex = exprList();
+                
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.SEMICOLON )
@@ -804,6 +846,12 @@ public class Compiler {
                                 if(ident == null)
                                 {
                                     signalError.showError("Identifier " + firstId + " was not declared.");
+                                }
+                                
+                                if ((this.symbolTable.getInLocal(firstId).getClass() == InstanceVariable.class)){
+                                    signalError.showError("Identifier '"
+                                                          + firstId
+                                                          + "' was not found");
                                 }
                                 
 				return ve;

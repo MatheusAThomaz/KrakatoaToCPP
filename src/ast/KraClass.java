@@ -10,6 +10,7 @@ public class KraClass extends Type {
    public KraClass( String name ) {
       super(name);
       publicMethodList = new ArrayList();
+      instanceVar = new ArrayList();
    }
    
    public String getCname() {
