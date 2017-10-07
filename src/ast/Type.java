@@ -35,7 +35,7 @@ abstract public class Type {
            return false;
        }
        else if (this instanceof KraClass){
-           return this == other ||((KraClass) this).isSubclasOf(other);
+           return this.getName().equals(other.getName()) ||((KraClass) this).isSubclasOf(other);
        }
        else {
            return false;

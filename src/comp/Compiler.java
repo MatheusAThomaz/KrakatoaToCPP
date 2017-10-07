@@ -134,6 +134,11 @@ public class Compiler {
 			if ( lexer.token != Symbol.IDENT )
 				signalError.show(ErrorSignaller.ident_expected);
 			String superclassName = lexer.getStringValue();
+                        
+                        if(className.equals(superclassName))
+                        {
+                            this.signalError.showError("Class '" + className + "' is inheriting from itself");
+                        }
 
 			lexer.nextToken();
 		}
@@ -269,6 +274,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
                 
 		Variable v = new Variable(lexer.getStringValue(), type);
+                
                 if (this.symbolTable.getInLocal(v.getName()) != null){
                     this.signalError.showError("Variable '"
                                                + v.getName()
@@ -330,7 +336,10 @@ public class Compiler {
 		case IDENT:
 			// # corrija: fa�a uma busca na TS para buscar a classe
 			// IDENT deve ser uma classe.
-			result = null;
+                        
+                        KraClass kra = this.symbolTable.getInGlobal(lexer.getStringValue());
+                    
+			result = kra;
 			break;
 		default:
 			signalError.showError("Type expected");
@@ -389,11 +398,11 @@ public class Compiler {
 		switch (lexer.token) {
 		case THIS:
 		case IDENT:
+                    
 		case SUPER:
 		case INT:
 		case BOOLEAN:
 		case STRING:
-                        
 			assignExprLocalDec();
 			break;
 		case ASSERT:
@@ -478,11 +487,29 @@ public class Compiler {
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ]
 			 */
 			leftSide = expr();
+                        
+                        if(leftSide instanceof ObjectCallExpr)
+                        {
+                            
+                            MethodDec md;
+                            md = ((ObjectCallExpr) leftSide).getMethod();
+                            
+                            if( md != null)
+                            {
+                                if(!(md.getReturnType() instanceof TypeVoid))
+                                {
+                                    this.signalError.showError("Message send returns a value that is not used");
+                                }
+                            }
+                        }
+                        
 			if ( lexer.token == Symbol.ASSIGN ) {
+                                
 				lexer.nextToken();
 				rightSide = expr();
                                 
-                                if (!(leftSide.getType().isCompatible(rightSide.getType()))){
+                                
+                                if (!(rightSide.getType().isCompatible(leftSide.getType()))){
                                     this.signalError.showError("Wrong type in the right-hand side of the expression");
                                 }
                                 
@@ -507,7 +534,9 @@ public class Compiler {
 	}
 
 	private WhileStatement whileStatement() {
-
+                
+                this.currentWhileStatement = true;
+                
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
@@ -519,6 +548,7 @@ public class Compiler {
 		lexer.nextToken();
 		Statement s = statement();
                 
+                this.currentWhileStatement = false;
                 return new WhileStatement(e, s);
 	}
 
@@ -581,6 +611,14 @@ public class Compiler {
 				signalError.show(ErrorSignaller.ident_expected);
 
 			String name = lexer.getStringValue();
+                        
+                        Type type = this.symbolTable.getInLocal(name).getType();
+                        
+                        if(type == null)
+                            this.signalError.showError("Variable '" + name + "' was not declared");
+                        else if(type instanceof TypeBoolean)
+                            this.signalError.showError("Command 'read' does not accept 'boolean' variables");
+                        
                         rs.addNameList(name);
                         
 			lexer.nextToken();
@@ -602,11 +640,22 @@ public class Compiler {
 	private WriteStatement writeStatement() {
 
                 ExprList ex = new ExprList();
+                int i = 0;
                 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
 		ex = exprList();
+                
+                while(i < ex.getExprList().size())
+                {
+                    if(ex.getExprList().get(i).getType() instanceof TypeBoolean)
+                    {
+                        this.signalError.showError("Command 'write' does not accept 'boolean' variables");
+                    }
+                    
+                    i++;
+                }
                 
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
@@ -619,12 +668,24 @@ public class Compiler {
 
 	private WritelnStatement writelnStatement() {
 
-                ExprList ex = new ExprList();
-            
+                ExprList ex;
+                int i = 0;
+                
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
-		exprList();
+		ex = exprList();
+                
+                while(i < ex.getExprList().size())
+                {
+                    if(ex.getExprList().get(i).getType() instanceof TypeBoolean)
+                    {
+                        this.signalError.showError("Command 'write' does not accept 'boolean' variables");
+                    }
+                    
+                    i++;
+                }
+                
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.SEMICOLON )
@@ -635,6 +696,10 @@ public class Compiler {
 	}
 
             private BreakStatement breakStatement() {
+                
+                if(!this.currentWhileStatement)
+                    this.signalError.showError("Break statement found outside a 'while' statement");
+                
 		lexer.nextToken();
 		if ( lexer.token != Symbol.SEMICOLON )
 			signalError.show(ErrorSignaller.semicolon_expected);
@@ -681,7 +746,24 @@ public class Compiler {
 		while ((op = lexer.token) == Symbol.MINUS || op == Symbol.PLUS
 				|| op == Symbol.OR) {
 			lexer.nextToken();
+                        
+                        if(left.getType() instanceof TypeBoolean)
+                        {
+                            if(op == Symbol.MINUS)
+                                this.signalError.showError("type boolean does not support operation '-'");
+                            
+                            if(op == Symbol.PLUS)
+                                this.signalError.showError("type boolean does not support operation '+'");
+                        }
 			Expr right = term();
+                        
+                        if(left.getType() instanceof TypeInt)
+                        {
+                            if(!(right.getType() instanceof TypeInt))
+                            {
+                                this.signalError.showError("Operator '" + op.name() + "' of 'int' expects a 'int' value");
+                            }
+                        }
 			left = new CompositeExpr(left, op, right);
 		}
 		return left;
@@ -693,6 +775,16 @@ public class Compiler {
 		Expr left = signalFactor();
 		while ((op = lexer.token) == Symbol.DIV || op == Symbol.MULT
 				|| op == Symbol.AND) {
+                    
+                        if(left.getType() instanceof TypeBoolean)
+                        {
+                            if(op == Symbol.DIV)
+                                this.signalError.showError("type boolean does not support operation '/'");
+                            
+                            if(op == Symbol.MULT)
+                                this.signalError.showError("type boolean does not support operation '*'");
+                        }
+                                            
 			lexer.nextToken();
 			Expr right = signalFactor();
 			left = new CompositeExpr(left, op, right);
@@ -794,7 +886,7 @@ public class Compiler {
 			/*
 			 * return an object representing the creation of an object
 			 */
-			return null;
+			return new ObjectDecExpr(className);
 			/*
           	 * PrimaryExpr ::= "super" "." Id "(" [ ExpressionList ] ")"  | 
           	 *                 Id  |
@@ -836,12 +928,15 @@ public class Compiler {
                         
                         
 			String firstId = lexer.getStringValue();
+                        
 			lexer.nextToken();
+                        
 			if ( lexer.token != Symbol.DOT ) {
 				// Id
 				// retorne um objeto da ASA que representa um identificador
                                 
                                 Variable ident = this.symbolTable.getInLocal(firstId);
+                                
                                 VariableExpr ve = new VariableExpr(ident);
                                 if(ident == null)
                                 {
@@ -886,6 +981,7 @@ public class Compiler {
 						// Id "." Id "(" [ ExpressionList ] ")"
                                                 
                                                 Variable var = this.symbolTable.getInLocal(firstId);
+                                                VariableExpr ve = new VariableExpr(var);
                                                 
                                                 if(var == null)
                                                 {
@@ -901,6 +997,7 @@ public class Compiler {
                                                 KraClass varClass  = (KraClass ) varType;
 
                                                 MethodDec amethod = varClass.searchPublicMethod(id);
+                                                
                                                 if (amethod == null){
                                                     this.signalError.showError("Method '" + id 
                                                                                + "' is not a public method of '" 
@@ -909,7 +1006,12 @@ public class Compiler {
                                                                                + firstId + "'");
                                                 }
                                                 
+                                                
 						exprList = this.realParameters();
+                                                ObjectCallExpr obj = new ObjectCallExpr(amethod, firstId, exprList);
+                                                
+                                                
+                                                return obj;
 						/*
 						 * para fazer as confer�ncias sem�nticas, procure por
 						 * m�todo 'ident' na classe de 'firstId'
@@ -1003,5 +1105,6 @@ public class Compiler {
 	private ErrorSignaller	signalError;
         private MethodDec currentMethod;
         private KraClass currentClass;
+        private boolean currentWhileStatement = false;
 
 }

@@ -36,6 +36,10 @@ public class CompositeExpr extends Expr {
             return Type.booleanType;
        else if ( oper == Symbol.AND || oper == Symbol.OR )
             return Type.booleanType;
+       else if ( oper == Symbol.DOT)
+       {
+           return right.getType();
+       }
        else
             return Type.intType;
     }
