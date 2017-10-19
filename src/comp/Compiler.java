@@ -11,7 +11,6 @@ public class Compiler {
 	// compile must receive an input with an character less than
 	// p_input.lenght
 	public Program compile(char[] input, PrintWriter outError) {
-
 		ArrayList<CompilationError> compilationErrorList = new ArrayList<>();
 		signalError = new ErrorSignaller(outError, compilationErrorList);
 		symbolTable = new SymbolTable();
@@ -35,7 +34,7 @@ public class Compiler {
 			}
 			classDec();
 			while ( lexer.token == Symbol.CLASS )
-				classDec();
+                            classDec();
 			if ( lexer.token != Symbol.EOF ) {
 				signalError.showError("End of file expected");
 			}
@@ -147,7 +146,7 @@ public class Compiler {
 		lexer.nextToken();
 
 		while (lexer.token == Symbol.PRIVATE || lexer.token == Symbol.PUBLIC) {
-
+                        
 			Symbol qualifier;
 			switch (lexer.token) {
 			case PRIVATE:
@@ -173,16 +172,22 @@ public class Compiler {
 				signalError.showError("Attempt to declare a public instance variable");
 			else
 				instanceVarDec(t, name);
+                        
+                        
+                        
 		}
+                
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
 			signalError.showError("public/private or \"}\" expected");
 		lexer.nextToken();
+                
+                
 
 	}
 
 	private void instanceVarDec(Type type, String name) {
 		// InstVarDec ::= [ "static" ] "private" Type IdList ";"
-                    
+                
                 this.currentClass.addInstanceVariable(new InstanceVariable(name, type));
                 
                  if (this.symbolTable.getInLocal(name) != null){
@@ -227,9 +232,12 @@ public class Compiler {
 		 *                StatementList "}"
 		 */
                 
+                
                 this.currentMethod = new MethodDec(name, type, qualifier);
                 
                 Variable varMethodCurrent = new Variable (name, type);
+                
+                
                 
                 if (this.symbolTable.getInLocal(varMethodCurrent.getName()) != null){
                     this.signalError.showError("Method '" + this.currentMethod.getName() 
@@ -249,13 +257,14 @@ public class Compiler {
 		lexer.nextToken();
 		if ( lexer.token != Symbol.RIGHTPAR ) formalParamDec();
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
-
+                
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("{ expected");
-
+                
 		lexer.nextToken();
                 
 		statementList();
+                
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
@@ -264,7 +273,8 @@ public class Compiler {
                 this.currentClass.addMethod(this.currentMethod);
                 
                 this.currentMethod = null;
-
+                
+                
 	}
 
 	private void localDec() {
@@ -373,6 +383,7 @@ public class Compiler {
                 
 		while ((tk = lexer.token) != Symbol.RIGHTCURBRACKET
 				&& tk != Symbol.ELSE){
+                        
 			st = statement();
                         
                         stl.addElement(st);
@@ -394,7 +405,7 @@ public class Compiler {
 		 *                ``;'' | ReturnStat ``;'' | ReadStat ``;'' | WriteStat ``;'' |
 		 *               ``break'' ``;'' | ``;'' | CompStatement | LocalDec
 		 */
-
+                
 		switch (lexer.token) {
 		case THIS:
 		case IDENT:
@@ -403,7 +414,9 @@ public class Compiler {
 		case INT:
 		case BOOLEAN:
 		case STRING:
+                        
 			assignExprLocalDec();
+                        
 			break;
 		case ASSERT:
 			return assertStatement();
@@ -492,7 +505,7 @@ public class Compiler {
                         {
                             
                             MethodDec md;
-                            md = ((ObjectCallExpr) leftSide).getMethod();
+                            md = ((ObjectCallExpr) leftSide).getMethod();                            
                             
                             if( md != null)
                             {
@@ -505,13 +518,29 @@ public class Compiler {
                         
 			if ( lexer.token == Symbol.ASSIGN ) {
                                 
+                                
+                                
 				lexer.nextToken();
 				rightSide = expr();
                                 
+                                //System.out.println( instanceof TypeVoid);
                                 
+                                if(rightSide instanceof ObjectCallExpr)
+                                {
+                                    Type type;
+                                    type = ((ObjectCallExpr) rightSide).getMethod().getReturnType();  
+                                    
+                                    if(type instanceof TypeVoid)
+                                    {
+                                        this.signalError.showError("Expression expected in the right-hand side of assignment");
+                                    }
+                                }
+                                System.out.println(leftSide);
                                 if (!(rightSide.getType().isCompatible(leftSide.getType()))){
                                     this.signalError.showError("Wrong type in the right-hand side of the expression");
                                 }
+                                
+                                
                                 
 				if ( lexer.token != Symbol.SEMICOLON )
 					signalError.showError("';' expected", true);
@@ -1037,7 +1066,7 @@ public class Compiler {
 				// only 'this'
 				// retorne um objeto da ASA que representa 'this'
 				// confira se n�o estamos em um m�todo est�tico
-				return null;
+				return new ThisExpr(this.currentClass);
 			}
 			else {
 				lexer.nextToken();
@@ -1046,12 +1075,21 @@ public class Compiler {
 				id = lexer.getStringValue();
 				lexer.nextToken();
 				// j� analisou "this" "." Id
+                                Variable var = this.symbolTable.getInLocal(id);
+                                VariableExpr varExpr = new VariableExpr(var);
+                                
+                                
 				if ( lexer.token == Symbol.LEFTPAR ) {
 					// "this" "." Id "(" [ ExpressionList ] ")"
 					/*
 					 * Confira se a classe corrente possui um m�todo cujo nome �
 					 * 'ident' e que pode tomar os par�metros de ExpressionList
 					 */
+                                        
+                                        if(this.currentClass.searchPublicMethod(id) == null)
+                                        {
+                                            this.signalError.showError("Type error: the type of the real parameter is not subclass of the type of the formal parameter");
+                                        }
 					exprList = this.realParameters();
 				}
 				else if ( lexer.token == Symbol.DOT ) {
@@ -1068,7 +1106,7 @@ public class Compiler {
 					 * confira se a classe corrente realmente possui uma
 					 * vari�vel de inst�ncia 'ident'
 					 */
-					return null;
+					return new ThisExpr(null, varExpr, null, this.currentClass);
 				}
 			}
 			break;
