@@ -28,20 +28,37 @@ public class Compiler {
 		ArrayList<MetaobjectCall> metaobjectCallList = new ArrayList<>();
 		ArrayList<KraClass> kraClassList = new ArrayList<>();
 		Program program = new Program(kraClassList, metaobjectCallList, compilationErrorList);
+                Boolean flag = false;
+                
 		try {
 			while ( lexer.token == Symbol.MOCall ) {
 				metaobjectCallList.add(metaobjectCall());
 			}
-			classDec();
+			kraClassList.add(classDec());
 			while ( lexer.token == Symbol.CLASS )
-                            classDec();
+                           kraClassList.add(classDec());
+                        
+                        for (KraClass kr: kraClassList){
+                            if (kr.getCname().equals("Program")){
+                                flag = true;
+                            } 
+                        }
+                        
+                        if (!flag){
+                            this.signalError.showError("Source code without a class 'Program'");
+                        }
+                        
 			if ( lexer.token != Symbol.EOF ) {
 				signalError.showError("End of file expected");
 			}
 		}
-		catch( RuntimeException e) {
-			// if there was an exception, there is a compilation signalError
-		}
+		catch( CompilerError e) {
+                    // if there was an exception, there is a compilation signalError
+                }
+                catch ( RuntimeException e ) {
+                    e.printStackTrace();
+                }
+                
 		return program;
 	}
 
@@ -106,7 +123,7 @@ public class Compiler {
 		return new MetaobjectCall(name, metaobjectParamList);
 	}
 
-	private void classDec() {
+	private KraClass classDec() {
 		// Note que os m�todos desta classe n�o correspondem exatamente �s
 		// regras
 		// da gram�tica. Este m�todo classDec, por exemplo, implementa
@@ -120,6 +137,9 @@ public class Compiler {
 		 * MethodDec ::= Qualifier Type Id "("[ FormalParamDec ] ")" "{" StatementList "}" 
 		 * Qualifier ::= [ "static" ]  ( "private" | "public" )
 		 */
+                
+                Boolean flag = false;
+                
 		if ( lexer.token != Symbol.CLASS ) signalError.showError("'class' expected");
 		lexer.nextToken();
 		if ( lexer.token != Symbol.IDENT )
@@ -146,7 +166,6 @@ public class Compiler {
 		lexer.nextToken();
 
 		while (lexer.token == Symbol.PRIVATE || lexer.token == Symbol.PUBLIC) {
-                        
 			Symbol qualifier;
 			switch (lexer.token) {
 			case PRIVATE:
@@ -166,23 +185,31 @@ public class Compiler {
 				signalError.showError("Identifier expected");
 			String name = lexer.getStringValue();
 			lexer.nextToken();
-			if ( lexer.token == Symbol.LEFTPAR )
+			if ( lexer.token == Symbol.LEFTPAR ){
+                                if (name.equals("run")) flag = true;
 				methodDec(t, name, qualifier);
+                        }
 			else if ( qualifier != Symbol.PRIVATE )
 				signalError.showError("Attempt to declare a public instance variable");
 			else
-				instanceVarDec(t, name);
-                        
-                        
-                        
+				instanceVarDec(t, name);   
+                
 		}
+                
+                if (!flag && this.currentClass.getCname().equals("Program")){
+                    this.signalError.showError("Method 'run' was not found in class 'Program'");
+                }
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET )
 			signalError.showError("public/private or \"}\" expected");
 		lexer.nextToken();
                 
                 
-
+                
+                
+                
+                return new KraClass(className);
+                
 	}
 
 	private void instanceVarDec(Type type, String name) {
@@ -232,12 +259,11 @@ public class Compiler {
 		 *                StatementList "}"
 		 */
                 
+                ParamList pList;
                 
                 this.currentMethod = new MethodDec(name, type, qualifier);
                 
                 Variable varMethodCurrent = new Variable (name, type);
-                
-                
                 
                 if (this.symbolTable.getInLocal(varMethodCurrent.getName()) != null){
                     this.signalError.showError("Method '" + this.currentMethod.getName() 
@@ -250,13 +276,21 @@ public class Compiler {
                                                + this.currentClass.getName()
                                                + "' cannot be private");
                 }
-                    
                 
+                    
                 this.symbolTable.putInLocal(varMethodCurrent.getName(), varMethodCurrent);
                 
 		lexer.nextToken();
-		if ( lexer.token != Symbol.RIGHTPAR ) formalParamDec();
+		if ( lexer.token != Symbol.RIGHTPAR ){
+                    pList = formalParamDec();
+                    
+                    if (name.equals("run") && pList.getSize() > 0){
+                        this.signalError.showError(" Method 'run' of class 'Program' cannot take parameters");
+                    }
+                }
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
+                
+                
                 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("{ expected");
@@ -273,7 +307,6 @@ public class Compiler {
                 this.currentClass.addMethod(this.currentMethod);
                 
                 this.currentMethod = null;
-                
                 
 	}
 
@@ -305,17 +338,19 @@ public class Compiler {
                     this.signalError.showError("Unknown character");
 	}
 
-	private void formalParamDec() {
+	private ParamList formalParamDec() {
 		// FormalParamDec ::= ParamDec { "," ParamDec }
-
-		paramDec();
+                ParamList pList = new ParamList();
+		pList.addElement(paramDec());
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
-			paramDec();
+			pList.addElement(paramDec());
 		}
+                
+                return pList;
 	}
 
-	private void paramDec() {
+	private Parameter paramDec() {
 		// ParamDec ::= Type Id
 
 		Type t = type();
@@ -324,6 +359,8 @@ public class Compiler {
                 Parameter p = new Parameter(lexer.getStringValue(), t);
                 this.symbolTable.putInLocal(p.getName(), p);
 		lexer.nextToken();
+                
+                return p;
 	}
 
 	private Type type() {
@@ -340,6 +377,9 @@ public class Compiler {
 		case BOOLEAN:
 			result = Type.booleanType;
 			break;
+                case NULL:
+                        result = Type.nullType;
+                        break;
 		case STRING:
 			result = Type.stringType;
 			break;
@@ -380,22 +420,19 @@ public class Compiler {
 		// CompStatement ::= "{" { Statement } "}"
 		Symbol tk;
 		// statements always begin with an identifier, if, read, write, ...
-                
 		while ((tk = lexer.token) != Symbol.RIGHTCURBRACKET
 				&& tk != Symbol.ELSE){
-                        
+                       
 			st = statement();
                         
                         stl.addElement(st);
                 }
                
-                
                 if ( !(this.currentMethod.getReturnType() instanceof TypeVoid) 
                    && !(st instanceof ReturnStatement)){
                         this.signalError.showError("Missing 'return' statement in method '"
                                                    + this.currentMethod.getName() + "'");
                 }
-                
                 return stl;
 	}
 
@@ -414,9 +451,9 @@ public class Compiler {
 		case INT:
 		case BOOLEAN:
 		case STRING:
-                        
+
 			assignExprLocalDec();
-                        
+
 			break;
 		case ASSERT:
 			return assertStatement();
@@ -481,7 +518,6 @@ public class Compiler {
                 
                 Expr leftSide = null;
                 Expr rightSide = null;
-                
 		if ( lexer.token == Symbol.INT || lexer.token == Symbol.BOOLEAN
 				|| lexer.token == Symbol.STRING ||
 				// token � uma classe declarada textualmente antes desta
@@ -499,8 +535,9 @@ public class Compiler {
 			/*
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ]
 			 */
-			leftSide = expr();
                         
+			leftSide = expr();
+    
                         if(leftSide instanceof ObjectCallExpr)
                         {
                             
@@ -518,8 +555,6 @@ public class Compiler {
                         
 			if ( lexer.token == Symbol.ASSIGN ) {
                                 
-                                
-                                
 				lexer.nextToken();
 				rightSide = expr();
                                 
@@ -535,13 +570,9 @@ public class Compiler {
                                         this.signalError.showError("Expression expected in the right-hand side of assignment");
                                     }
                                 }
-                                System.out.println(leftSide);
-                                if (!(rightSide.getType().isCompatible(leftSide.getType()))){
+                                if (!(leftSide.getType().isCompatible(rightSide.getType()))){
                                     this.signalError.showError("Wrong type in the right-hand side of the expression");
                                 }
-                                
-                                
-                                
 				if ( lexer.token != Symbol.SEMICOLON )
 					signalError.showError("';' expected", true);
 				else
@@ -672,15 +703,19 @@ public class Compiler {
                 int i = 0;
                 
 		lexer.nextToken();
-		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
+		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError(" '(' expected");
 		lexer.nextToken();
 		ex = exprList();
                 
                 while(i < ex.getExprList().size())
                 {
+                    
                     if(ex.getExprList().get(i).getType() instanceof TypeBoolean)
                     {
                         this.signalError.showError("Command 'write' does not accept 'boolean' variables");
+                    }
+                    else if (ex.getExprList().get(i).getType() instanceof KraClass){
+                        this.signalError.showError("Command 'write' does not accept objects");
                     }
                     
                     i++;
@@ -704,12 +739,15 @@ public class Compiler {
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
 		ex = exprList();
-                
+       
                 while(i < ex.getExprList().size())
                 {
                     if(ex.getExprList().get(i).getType() instanceof TypeBoolean)
                     {
                         this.signalError.showError("Command 'write' does not accept 'boolean' variables");
+                    }
+                    else if (ex.getExprList().get(i).getType() instanceof KraClass){
+                        this.signalError.showError("Command 'write' does not accept objects");
                     }
                     
                     i++;
@@ -756,13 +794,18 @@ public class Compiler {
 	}
 
 	private Expr expr() {
-
+                
 		Expr left = simpleExpr();
 		Symbol op = lexer.token;
 		if ( op == Symbol.EQ || op == Symbol.NEQ || op == Symbol.LE
 				|| op == Symbol.LT || op == Symbol.GE || op == Symbol.GT ) {
 			lexer.nextToken();
 			Expr right = simpleExpr();
+                        
+                        if (left.getType() != right.getType() && (op == Symbol.NEQ || op == Symbol.EQ)){
+                            this.signalError.showError("Incompatible types cannot be compared with '!=' because the result will always be 'false'");
+                        }
+                        
 			left = new CompositeExpr(left, op, right);
 		}
 		return left;
@@ -852,7 +895,6 @@ public class Compiler {
 		Expr anExpr;
 		ExprList exprList;
 		String messageName, id;
-
 		switch (lexer.token) {
 		// IntValue
 		case LITERALINT:
@@ -942,9 +984,19 @@ public class Compiler {
 			 * para fazer as confer�ncias sem�nticas, procure por 'messageName'
 			 * na superclasse/superclasse da superclasse etc
 			 */
+                        
+                        if (this.currentClass.getSuperClass() == null){
+                            signalError.showError("'super' used in class 'Program' that does not have a superclass");
+                        }
+                        
+                        if (this.currentClass.searchSuperMethod(messageName) == null){
+                            signalError.showError("Method does not exist in superclass");
+                        }
+                        
 			lexer.nextToken();
 			exprList = realParameters();
-			break;
+                        
+                        return new SuperExpr(this.currentMethod, this.currentClass);
 		case IDENT:
 			/*
           	 * PrimaryExpr ::=  
@@ -990,21 +1042,7 @@ public class Compiler {
 					lexer.nextToken();
 					id = lexer.getStringValue();
 					if ( lexer.token == Symbol.DOT ) {
-						// Id "." Id "." Id "(" [ ExpressionList ] ")"
-						/*
-						 * se o compilador permite vari�veis est�ticas, � poss�vel
-						 * ter esta op��o, como
-						 *     Clock.currentDay.setDay(12);
-						 * Contudo, se vari�veis est�ticas n�o estiver nas especifica��es,
-						 * sinalize um erro neste ponto.
-						 */
-						lexer.nextToken();
-						if ( lexer.token != Symbol.IDENT )
-							signalError.showError("Identifier expected");
-						messageName = lexer.getStringValue();
-						lexer.nextToken();
-						exprList = this.realParameters();
-
+						this.signalError.showError("Static operation current not supported");
 					}
 					else if ( lexer.token == Symbol.LEFTPAR ) {
 						// Id "." Id "(" [ ExpressionList ] ")"
@@ -1023,9 +1061,13 @@ public class Compiler {
                                                     this.signalError.showError("Attempt to call a method on a variable of a basic type.");
                                                 }
                                                 
-                                                KraClass varClass  = (KraClass ) varType;
+                                                KraClass varClass  = (KraClass) varType;
 
                                                 MethodDec amethod = varClass.searchPublicMethod(id);
+                                                if (amethod == null){
+                                         
+                                                    amethod = varClass.searchSuperMethod(id);
+                                                }
                                                 
                                                 if (amethod == null){
                                                     this.signalError.showError("Method '" + id 
@@ -1033,6 +1075,10 @@ public class Compiler {
                                                                                + varClass.getName() 
                                                                                + "' which is the type of '"
                                                                                + firstId + "'");
+                                                }
+                                                
+                                                if (! varClass.getCname().equals(this.currentClass.getCname()) && amethod.getQualifier() == Symbol.PRIVATE){
+                                                    this.signalError.showError("Method '" + amethod.getName() + "' was not found in the public interface of '" + varClass.getCname() + "' or its superclasses");
                                                 }
                                                 
                                                 
@@ -1047,7 +1093,20 @@ public class Compiler {
 						 */
 					}
 					else {
-						// retorne o objeto da ASA que representa Id "." Id
+                                                Variable var = this.symbolTable.getInLocal(firstId);
+                                                Variable var2 = this.symbolTable.getInLocal(id);
+                                                
+                                                if(var == null)
+                                                {
+                                                    this.signalError.showError("Identifier '" + firstId + "' was not declared");
+                                                }
+                          
+                                                if(var2 == null)
+                                                {
+                                                    this.signalError.showError("Identifier '" + id + "' was not declared");
+                                                }
+                                            
+						return new ObjectCallExpr(var, var2, this.currentClass.getCname());
 					}
 				}
 			}
@@ -1106,14 +1165,15 @@ public class Compiler {
 					 * confira se a classe corrente realmente possui uma
 					 * vari�vel de inst�ncia 'ident'
 					 */
-					return new ThisExpr(null, varExpr, null, this.currentClass);
+                                        
+					return new ThisExpr(varExpr, this.currentClass);
 				}
 			}
 			break;
 		default:
-			signalError.showError("Expression expected");
+			this.signalError.showError("Expression expected");
 		}
-		return null;
+                return new NullExpr();
 	}
 
 	private LiteralInt literalInt() {

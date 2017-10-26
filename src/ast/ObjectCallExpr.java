@@ -14,6 +14,7 @@ public class ObjectCallExpr extends Expr {
     private MethodDec method;
     private String className;
     private Variable variable;
+    private Variable variable2;
     private ExprList expr;
 
     public MethodDec getMethod() {
@@ -27,6 +28,11 @@ public class ObjectCallExpr extends Expr {
     public Variable getVariable() {
         return variable;
     }
+    
+    public Variable getVariable2() {
+        return variable2;
+    }
+    
 
     public ExprList getExpr() {
         return expr;
@@ -39,6 +45,8 @@ public class ObjectCallExpr extends Expr {
         this.className = className;
         this.variable = null;
         this.expr = expr;
+        this.variable2 = null;
+        
     }
     
     public ObjectCallExpr (Variable variable, String className)
@@ -46,7 +54,19 @@ public class ObjectCallExpr extends Expr {
         this.method = null;
         this.className = className;
         this.variable = variable;
+        this.expr = null;
+        this.variable2 = null;
     }
+    
+    public ObjectCallExpr (Variable variable, Variable variable2, String className)
+    {
+        this.method = null;
+        this.className = className;
+        this.variable = variable;
+        this.expr = null;
+        this.variable2 = variable2;
+    }
+    
     
     @Override
     public void genC(PW pw, boolean putParenthesis) {
@@ -55,7 +75,13 @@ public class ObjectCallExpr extends Expr {
 
     @Override
     public Type getType() {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        
+        if (this.method == null){
+            if (this.variable2 == null) return this.variable.getType();
+            else return this.variable2.getType();
+        }
+        else return this.method.getReturnType();
+        
     }
     
     

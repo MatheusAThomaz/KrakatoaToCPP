@@ -31,7 +31,7 @@ public class KraClass extends Type {
         return true;
     }
     
-   private KraClass getSuperClass() {
+   public KraClass getSuperClass() {
        return superclass;
    }
     
@@ -51,6 +51,19 @@ public class KraClass extends Type {
         }
        
        return null;
+   }
+   
+   public MethodDec searchSuperMethod(String methodName){
+        KraClass k = this.superclass;
+        while (k != null){
+            for (MethodDec m : k.publicMethodList){
+                if (m.getName().equals(methodName)){
+                     return m;
+                 }
+            }
+            k = this.superclass.superclass;
+        }
+        return null;
    }
    
    public void addInstanceVariable(InstanceVariable instanceVariable) {
