@@ -15,6 +15,10 @@ public class ExprList {
     public ArrayList<Expr> getExprList(){
         return exprList;
     }
+    
+     public int getSize() {
+        return exprList.size();
+    }
 
     public void genC( PW pw ) {
 

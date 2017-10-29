@@ -35,9 +35,12 @@ public class Compiler {
 				metaobjectCallList.add(metaobjectCall());
 			}
 			kraClassList.add(classDec());
-			while ( lexer.token == Symbol.CLASS )
-                           kraClassList.add(classDec());
-                        
+			while ( lexer.token == Symbol.CLASS ){
+                            
+                            this.symbolTable.removeLocalIdent();
+                            
+                            kraClassList.add(classDec());
+                        }
                         for (KraClass kr: kraClassList){
                             if (kr.getCname().equals("Program")){
                                 flag = true;
@@ -139,6 +142,7 @@ public class Compiler {
 		 */
                 
                 Boolean flag = false;
+                KraClass kr;
                 
 		if ( lexer.token != Symbol.CLASS ) signalError.showError("'class' expected");
 		lexer.nextToken();
@@ -152,12 +156,17 @@ public class Compiler {
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
 				signalError.show(ErrorSignaller.ident_expected);
-			String superclassName = lexer.getStringValue();
-                        
+			String superclassName = lexer.getStringValue();     
+               
                         if(className.equals(superclassName))
                         {
                             this.signalError.showError("Class '" + className + "' is inheriting from itself");
-                        }
+                        }            
+
+                        kr = this.symbolTable.getInGlobal(superclassName);
+                        this.currentClass.setSuperClass(kr);
+                        this.symbolTable.getInGlobal(className).setSuperClass(kr);
+                        
 
 			lexer.nextToken();
 		}
@@ -205,10 +214,7 @@ public class Compiler {
 		lexer.nextToken();
                 
                 
-                
-                
-                
-                return new KraClass(className);
+                return this.currentClass;
                 
 	}
 
@@ -236,6 +242,7 @@ public class Compiler {
                         InstanceVariable ivr = new InstanceVariable(variableName, type);
                         
                         this.currentClass.addInstanceVariable(ivr);
+                        this.symbolTable.getInGlobal(this.currentClass.getCname()).addInstanceVariable(ivr);
                         
                         if (this.symbolTable.getInLocal(variableName) != null){
                             this.signalError.showError("Variable '" + variableName
@@ -261,9 +268,12 @@ public class Compiler {
                 
                 ParamList pList;
                 
+                MethodDec mred;
+                
                 this.currentMethod = new MethodDec(name, type, qualifier);
                 
                 Variable varMethodCurrent = new Variable (name, type);
+                
                 
                 if (this.symbolTable.getInLocal(varMethodCurrent.getName()) != null){
                     this.signalError.showError("Method '" + this.currentMethod.getName() 
@@ -277,20 +287,47 @@ public class Compiler {
                                                + "' cannot be private");
                 }
                 
+                if (this.currentClass.getSuperClass() != null){
+                    mred = this.currentClass.searchSuperMethod(name);
                     
+                    if (mred != null && mred.getReturnType() != type){
+                        this.signalError.showError("Method '" + name + "' of subclass '" + this.currentClass.getCname() + "' has a signature different from method inherited from superclass '" + this.currentClass.getSuperClass().getCname() + "'");
+                    }
+                }
+                varMethodCurrent.setMethod(true);
                 this.symbolTable.putInLocal(varMethodCurrent.getName(), varMethodCurrent);
                 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.RIGHTPAR ){
                     pList = formalParamDec();
+                    this.currentMethod.setParamList(pList);
                     
                     if (name.equals("run") && pList.getSize() > 0){
                         this.signalError.showError(" Method 'run' of class 'Program' cannot take parameters");
                     }
+                    
+                    if (this.currentClass.getSuperClass() != null){
+                        mred = this.currentClass.searchSuperMethod(name);
+                        
+                        if (mred != null){
+                            for (int i = 0; i < pList.getSize(); i++){
+                                if (mred.getParamList() == null || mred.getParamList().getArray().get(i) == null ||
+                                    mred.getParamList().getArray().get(i).getType() != pList.getArray().get(i).getType())
+                                    this.signalError.showError("Method '" + name +"' is being redefined in subclass '" 
+                                                                + this.currentClass.getCname() 
+                                                                + "' with a signature different from the method of superclass '" 
+                                                                + this.currentClass.getSuperClass().getCname() + "'");
+                            }
+                        }
+                    }
+                    
+                    
+                    
                 }
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
                 
-                
+                this.currentClass.addMethod(this.currentMethod);
+                this.symbolTable.getInGlobal(this.currentClass.getCname()).addMethod(this.currentMethod);
                 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("{ expected");
@@ -302,10 +339,7 @@ public class Compiler {
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
 		lexer.nextToken();
-                
-                
-                this.currentClass.addMethod(this.currentMethod);
-                
+
                 this.currentMethod = null;
                 
 	}
@@ -318,7 +352,10 @@ public class Compiler {
                 
 		Variable v = new Variable(lexer.getStringValue(), type);
                 
-                if (this.symbolTable.getInLocal(v.getName()) != null){
+                if (this.symbolTable.getInLocal(v.getName()) != null 
+                    && !this.symbolTable.getInLocal(v.getName()).isMethod()
+                    && ! (this.symbolTable.getInLocal(v.getName()) instanceof InstanceVariable)){
+                    
                     this.signalError.showError("Variable '"
                                                + v.getName()
                                                + "' is being redeclared");
@@ -420,16 +457,17 @@ public class Compiler {
 		// CompStatement ::= "{" { Statement } "}"
 		Symbol tk;
 		// statements always begin with an identifier, if, read, write, ...
+                
 		while ((tk = lexer.token) != Symbol.RIGHTCURBRACKET
 				&& tk != Symbol.ELSE){
-                       
+                        
 			st = statement();
                         
                         stl.addElement(st);
                 }
-               
+
                 if ( !(this.currentMethod.getReturnType() instanceof TypeVoid) 
-                   && !(st instanceof ReturnStatement)){
+                     && !(st instanceof ReturnStatement)){
                         this.signalError.showError("Missing 'return' statement in method '"
                                                    + this.currentMethod.getName() + "'");
                 }
@@ -570,9 +608,16 @@ public class Compiler {
                                         this.signalError.showError("Expression expected in the right-hand side of assignment");
                                     }
                                 }
-                                if (!(leftSide.getType().isCompatible(rightSide.getType()))){
+                                if (rightSide instanceof ThisExpr){
+                                    if (!(this.currentClass.isCompatible(leftSide.getType()))){
+                                        this.signalError.showError("Wrong type in the right-hand side of the expression");
+                                    }
+                                }
+                                else if (!(rightSide.getType().isCompatible(leftSide.getType()))){
                                     this.signalError.showError("Wrong type in the right-hand side of the expression");
                                 }
+                                
+                                
 				if ( lexer.token != Symbol.SEMICOLON )
 					signalError.showError("';' expected", true);
 				else
@@ -616,7 +661,6 @@ public class Compiler {
 
                 Statement st;
                 Statement elsest = null;
-            
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
 		lexer.nextToken();
@@ -631,7 +675,6 @@ public class Compiler {
 			lexer.nextToken();
 			elsest = statement();
 		}
-                
                 return new IfStatement(e, st, elsest);
 	}
 
@@ -650,6 +693,8 @@ public class Compiler {
                 if (! e.getType().isCompatible(this.currentMethod.getReturnType())){
                     this.signalError.showError("Method return type is not compatible with the expression");
                 }
+                
+                
                 
                 return new ReturnStatement (e);
 	}
@@ -993,6 +1038,10 @@ public class Compiler {
                             signalError.showError("Method does not exist in superclass");
                         }
                         
+                        else if (this.currentClass.searchSuperMethod(messageName).getQualifier() == Symbol.PRIVATE){
+                            signalError.showError("Method '" + messageName + "' was not found in the public interface of '" + this.currentClass.getCname() + "' or its superclasses");
+                        }
+                        
 			lexer.nextToken();
 			exprList = realParameters();
                         
@@ -1005,8 +1054,6 @@ public class Compiler {
           	 *                 Id "." Id "(" [ ExpressionList ] ")" |
           	 *                 Id "." Id "." Id "(" [ ExpressionList ] ")" |
 			 */
-                    
-                        
                         
 			String firstId = lexer.getStringValue();
                         
@@ -1061,9 +1108,11 @@ public class Compiler {
                                                     this.signalError.showError("Attempt to call a method on a variable of a basic type.");
                                                 }
                                                 
-                                                KraClass varClass  = (KraClass) varType;
-
+                                                
+                                                KraClass varClass  = this.symbolTable.getInGlobal(varType.getName());
                                                 MethodDec amethod = varClass.searchPublicMethod(id);
+                                                
+                                                
                                                 if (amethod == null){
                                          
                                                     amethod = varClass.searchSuperMethod(id);
@@ -1136,6 +1185,7 @@ public class Compiler {
 				// j� analisou "this" "." Id
                                 Variable var = this.symbolTable.getInLocal(id);
                                 VariableExpr varExpr = new VariableExpr(var);
+                                MethodDec mred;
                                 
                                 
 				if ( lexer.token == Symbol.LEFTPAR ) {
@@ -1145,11 +1195,25 @@ public class Compiler {
 					 * 'ident' e que pode tomar os par�metros de ExpressionList
 					 */
                                         
-                                        if(this.currentClass.searchPublicMethod(id) == null)
+                                        if(this.currentClass.searchPublicMethod(id) == null
+                                           && this.currentClass.searchSuperMethod(id) == null)
                                         {
-                                            this.signalError.showError("Type error: the type of the real parameter is not subclass of the type of the formal parameter");
+                                            this.signalError.showError("Method '" + id + "' was not found in class '" + this.currentClass.getCname() + "' or its superclasses");
                                         }
+                           
 					exprList = this.realParameters();
+                                        
+                                        if (this.currentClass.searchPublicMethod(id) != null) mred = this.currentClass.searchPublicMethod(id);
+                                        else mred = this.currentClass.searchSuperMethod(id);
+                                        
+                                        if (exprList != null){
+                                            for (int i = 0; i < exprList.getSize(); i++){
+                                                if (mred.getParamList() == null || mred.getParamList().getArray().get(i) == null ||
+                                                    mred.getParamList().getArray().get(i).getType() != exprList.getExprList().get(i).getType())
+                                                    this.signalError.showError("Type error: the type of the real parameter is not subclass of the type of the formal parameter");
+                                            }
+                                            
+                                        }
 				}
 				else if ( lexer.token == Symbol.DOT ) {
 					// "this" "." Id "." Id "(" [ ExpressionList ] ")"

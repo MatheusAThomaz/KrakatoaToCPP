@@ -42,6 +42,7 @@ abstract public class Type {
            if (other instanceof TypeNull){
                return true;
            }
+           
            return this.getName().equals(other.getName()) || ((KraClass) this).isSubclasOf(other);
        }
        else {

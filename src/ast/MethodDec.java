@@ -16,6 +16,7 @@ public class MethodDec {
     private final String name;
     private final Type returnType;
     private final Symbol qualifier;
+    private ParamList pList;
 
     public MethodDec(String name, Type returnType, Symbol qualifier) {
         this.name = name;
@@ -25,6 +26,14 @@ public class MethodDec {
 
     public String getName() {
         return name;
+    }
+    
+    public void setParamList(ParamList p){
+        this.pList = p;
+    }
+    
+    public ParamList getParamList() {
+        return pList;
     }
 
     public Type getReturnType() {

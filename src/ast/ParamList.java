@@ -11,6 +11,10 @@ public class ParamList {
     public void addElement(Variable v) {
        paramList.add(v);
     }
+    
+    public ArrayList<Variable> getArray(){
+        return paramList;
+    }
 
     public Iterator<Variable> elements() {
         return paramList.iterator();
