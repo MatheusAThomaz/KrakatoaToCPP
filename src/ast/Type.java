@@ -5,6 +5,13 @@ abstract public class Type {
     public Type( String name ) {
         this.name = name;
     }
+    
+    public Type (KraClass kclass)
+    {
+        this.kclass = kclass;
+    }
+    
+    private KraClass kclass;
 
     public static Type booleanType = new TypeBoolean();
     public static Type intType = new TypeInt();
@@ -38,12 +45,19 @@ abstract public class Type {
        else if (this instanceof TypeNull){
            return other instanceof TypeNull;
        }
+       
        else if (this instanceof KraClass){
-           if (other instanceof TypeNull){
-               return true;
+        if (other instanceof TypeNull){
+            return true;
            }
            
-           return this.getName().equals(other.getName()) || ((KraClass) this).isSubclasOf(other);
+        if(other instanceof KraClass)
+        {
+            return this.getName().equals(other.getName()) || ((KraClass) this).isSubclasOf(other);
+            
+        }
+        else
+            return false;
        }
        else {
            return false;

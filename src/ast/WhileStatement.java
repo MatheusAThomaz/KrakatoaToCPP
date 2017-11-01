@@ -38,7 +38,7 @@ public class WhileStatement extends Statement {
         pw.println(")");
         pw.add();
         this.statement.genKra(pw);
-        pw.sub();;
+        pw.sub();
     }
     
     

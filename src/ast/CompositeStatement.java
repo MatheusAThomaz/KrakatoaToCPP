@@ -17,12 +17,17 @@ public class CompositeStatement extends Statement{
         this.st = st;
     }
 
+    public StatementList getSt() {
+        return st;
+    }
+
     @Override
     public void genC(PW pw) {
     }
 
     @Override
     public void genKra(PW pw) {
+        st.genKra(pw);
     }
     
 }

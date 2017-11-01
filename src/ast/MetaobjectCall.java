@@ -3,7 +3,7 @@
  */
 package ast;
 
-import java.util.ArrayList;
+import java.util.*;
 
 /** This class represents a metaobject call as <code>{@literal @}ce(...)</code> in <br>
  * <code>
@@ -13,7 +13,7 @@ import java.util.ArrayList;
  * end <br>
  * </code>
  * 
-   @author José
+   @author Josï¿½
    
  */
 public class MetaobjectCall {
@@ -23,6 +23,18 @@ public class MetaobjectCall {
 		this.paramList = paramList;
 	}
 	
+        public void genKra(PW pw)
+        {
+            pw.println("@"+name);
+            
+            for(Object obj : this.getParamList())
+            {
+                    pw.println(obj.toString());
+            }
+            
+            pw.println();
+        }
+        
 	public ArrayList<Object> getParamList() {
 		return paramList;
 	}

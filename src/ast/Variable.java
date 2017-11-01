@@ -10,6 +10,12 @@ public class Variable {
     }
 
     public String getName() { return name; }
+    
+    
+    public void genKra(PW pw)
+    {
+        pw.print(this.type.getCname() + " " + this.getName());
+    }
 
     public Type getType() {
         return type; 

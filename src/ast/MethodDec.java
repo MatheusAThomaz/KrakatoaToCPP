@@ -17,6 +17,15 @@ public class MethodDec {
     private final Type returnType;
     private final Symbol qualifier;
     private ParamList pList;
+    private StatementList stlist;
+
+    public StatementList getStlist() {
+        return stlist;
+    }
+
+    public void setStlist(StatementList stlist) {
+        this.stlist = stlist;
+    }
 
     public MethodDec(String name, Type returnType, Symbol qualifier) {
         this.name = name;
@@ -26,6 +35,23 @@ public class MethodDec {
 
     public String getName() {
         return name;
+    }
+    
+    public void genKra(PW pw)
+    {
+        pw.printIdent(qualifier.name().toLowerCase() + " "  + this.returnType.getName() + " " + this.getName() + "(");
+        if(pList != null)
+            pList.genKra(pw);
+        pw.print(") {");
+        pw.println();
+        pw.add();
+        
+        if (stlist != null)
+            stlist.genKra(pw);
+        
+        pw.sub();
+        pw.printIdent("}");
+        pw.println();
     }
     
     public void setParamList(ParamList p){

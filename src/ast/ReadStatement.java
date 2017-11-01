@@ -30,7 +30,15 @@ public class ReadStatement extends Statement{
 
     @Override
     public void genKra(PW pw) {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        pw.printIdent("read(");
+        
+        pw.print(nameList.get(0));
+        for(int i = 1; i < this.nameList.size(); i++)
+        {
+            pw.print(", ");
+            pw.print(nameList.get(i));
+        }
+        pw.println(");");
     }
     
 }

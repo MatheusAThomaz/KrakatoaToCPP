@@ -17,7 +17,48 @@ public class KraClass extends Type {
       return getName();
    }
    
-    boolean isSubclasOf(Type other) {
+   public void genKra(PW pw)
+   {
+      pw.println("class " + this.getCname() + " {");
+      pw.println("");
+      
+      pw.add();
+      
+      for(InstanceVariable inst : this.getInstanceVar())
+      {
+          inst.genKra(pw);
+      }
+      
+      for(MethodDec method : this.getPublicMethodList())
+      {
+          method.genKra(pw);
+      }
+      
+      pw.println();
+      
+      
+      pw.sub();
+      pw.println("}");
+      pw.println();
+   }
+
+    public KraClass getSuperclass() {
+        return superclass;
+    }
+
+    public InstanceVariableList getInstanceVariableList() {
+        return instanceVariableList;
+    }
+
+    public ArrayList<MethodDec> getPublicMethodList() {
+        return publicMethodList;
+    }
+
+    public ArrayList<InstanceVariable> getInstanceVar() {
+        return instanceVar;
+    }
+   
+   boolean isSubclasOf(Type other) {
         KraClass current = this;
         while( current != other)
         {
@@ -64,7 +105,6 @@ public class KraClass extends Type {
                  }
             }
  
-            
             k = k.superclass;
         }
         return null;

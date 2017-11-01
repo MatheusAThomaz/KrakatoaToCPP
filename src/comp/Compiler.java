@@ -40,7 +40,12 @@ public class Compiler {
                             this.symbolTable.removeLocalIdent();
                             
                             kraClassList.add(classDec());
+                            
+                            
                         }
+                        
+                        
+                        
                         for (KraClass kr: kraClassList){
                             if (kr.getCname().equals("Program")){
                                 flag = true;
@@ -150,6 +155,7 @@ public class Compiler {
 			signalError.show(ErrorSignaller.ident_expected);
 		String className = lexer.getStringValue();
                 this.currentClass =  new KraClass(className);
+                
 		symbolTable.putInGlobal(className, this.currentClass);
 		lexer.nextToken();
 		if ( lexer.token == Symbol.EXTENDS ) {
@@ -164,6 +170,7 @@ public class Compiler {
                         }            
 
                         kr = this.symbolTable.getInGlobal(superclassName);
+                        
                         this.currentClass.setSuperClass(kr);
                         this.symbolTable.getInGlobal(className).setSuperClass(kr);
                         
@@ -191,7 +198,10 @@ public class Compiler {
 			}
 			Type t = type();
 			if ( lexer.token != Symbol.IDENT )
-				signalError.showError("Identifier expected");
+                        {
+                            
+                            signalError.showError("Identifier expected");
+                        }
 			String name = lexer.getStringValue();
 			lexer.nextToken();
 			if ( lexer.token == Symbol.LEFTPAR ){
@@ -236,7 +246,10 @@ public class Compiler {
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
-				signalError.showError("Identifier expected");
+                        {
+                            
+                            signalError.showError("Identifier expected");
+                        }
 			String variableName = lexer.getStringValue();
                         
                         InstanceVariable ivr = new InstanceVariable(variableName, type);
@@ -302,7 +315,7 @@ public class Compiler {
                     pList = formalParamDec();
                     this.currentMethod.setParamList(pList);
                     
-                    if (name.equals("run") && pList.getSize() > 0){
+                    if (name.equals("run") && pList.getSize() > 0 && this.currentClass.getCname().equals("Program")){
                         this.signalError.showError(" Method 'run' of class 'Program' cannot take parameters");
                     }
                     
@@ -327,14 +340,15 @@ public class Compiler {
 		if ( lexer.token != Symbol.RIGHTPAR ) signalError.showError(") expected");
                 
                 this.currentClass.addMethod(this.currentMethod);
-                this.symbolTable.getInGlobal(this.currentClass.getCname()).addMethod(this.currentMethod);
+                
+                //this.symbolTable.getInGlobal(this.currentClass.getCname()).addMethod(this.currentMethod);
                 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTCURBRACKET ) signalError.showError("{ expected");
                 
 		lexer.nextToken();
                 
-		statementList();
+		this.currentMethod.setStlist(statementList());
                 
 		if ( lexer.token != Symbol.RIGHTCURBRACKET ) signalError.showError("} expected");
 
@@ -344,23 +358,34 @@ public class Compiler {
                 
 	}
 
-	private void localDec() {
+	private Expr localDec() {
 		// LocalDec ::= Type IdList ";"
                 
 		Type type = type();
-		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
                 
-		Variable v = new Variable(lexer.getStringValue(), type);
+                
+		if ( lexer.token != Symbol.IDENT ) 
+                {
+                    signalError.showError("Identifier expected");
+                }
+                
+                Variable v = new Variable(lexer.getStringValue(), type);
+                
+                if(this.currentMethod != null)
+                {
+                    v.setMethod(true);
+                }
                 
                 if (this.symbolTable.getInLocal(v.getName()) != null 
                     && !this.symbolTable.getInLocal(v.getName()).isMethod()
-                    && ! (this.symbolTable.getInLocal(v.getName()) instanceof InstanceVariable)){
+                    && !(this.symbolTable.getInLocal(v.getName()) instanceof InstanceVariable)){
                     
                     this.signalError.showError("Variable '"
                                                + v.getName()
                                                + "' is being redeclared");
                 }
                 this.symbolTable.putInLocal(v.getName(), v);
+                
 		lexer.nextToken();
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
@@ -373,6 +398,8 @@ public class Compiler {
                 
                 if (lexer.token != Symbol.SEMICOLON) 
                     this.signalError.showError("Unknown character");
+                
+                return new VariableExpr(v);
 	}
 
 	private ParamList formalParamDec() {
@@ -454,6 +481,7 @@ public class Compiler {
                 
                 StatementList stl = new StatementList();
                 Statement st = null;
+                Boolean hasReturn = false;
 		// CompStatement ::= "{" { Statement } "}"
 		Symbol tk;
 		// statements always begin with an identifier, if, read, write, ...
@@ -466,11 +494,17 @@ public class Compiler {
                         stl.addElement(st);
                 }
 
-                if ( !(this.currentMethod.getReturnType() instanceof TypeVoid) 
-                     && !(st instanceof ReturnStatement)){
-                        this.signalError.showError("Missing 'return' statement in method '"
-                                                   + this.currentMethod.getName() + "'");
+                for(Statement stat : stl.getStmtList())
+                {
+                    if(stat instanceof IfStatement || stat instanceof ReturnStatement)
+                        hasReturn = true;
                 }
+                
+                if ( !(this.currentMethod.getReturnType() instanceof TypeVoid) 
+                         && !hasReturn){
+                            this.signalError.showError("Missing 'return' statement in method '"
+                                                       + this.currentMethod.getName() + "'");
+                    }
                 return stl;
 	}
 
@@ -490,9 +524,8 @@ public class Compiler {
 		case BOOLEAN:
 		case STRING:
 
-			assignExprLocalDec();
+			return assignExprLocalDec();
 
-			break;
 		case ASSERT:
 			return assertStatement();
 		case RETURN:
@@ -548,11 +581,11 @@ public class Compiler {
 	private boolean isType(String name) {
 		return this.symbolTable.getInGlobal(name) != null;
 	}
-
+        
 	/*
 	 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 	 */
-	private Expr assignExprLocalDec() {
+	private Statement assignExprLocalDec() {
                 
                 Expr leftSide = null;
                 Expr rightSide = null;
@@ -567,7 +600,8 @@ public class Compiler {
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec 
 			 * LocalDec ::= Type IdList ``;''
 			 */
-			localDec();
+			leftSide = localDec();
+                        return new AssignExprStatement(leftSide, rightSide, true);
 		}
 		else {
 			/*
@@ -609,12 +643,17 @@ public class Compiler {
                                     }
                                 }
                                 if (rightSide instanceof ThisExpr){
-                                    if (!(this.currentClass.isCompatible(leftSide.getType()))){
+                                    ThisExpr t = (ThisExpr) rightSide;
+                                    if (t.getVar() == null && t.getMethod() == null && !(this.currentClass.isCompatible(leftSide.getType()))){
                                         this.signalError.showError("Wrong type in the right-hand side of the expression");
                                     }
                                 }
+
                                 else if (!(rightSide.getType().isCompatible(leftSide.getType()))){
-                                    this.signalError.showError("Wrong type in the right-hand side of the expression");
+                                    if(!((leftSide.getType() instanceof KraClass) && (rightSide.getType() instanceof TypeNull)))
+                                    {
+                                        this.signalError.showError("Wrong type in the right-hand side of the expression");                                        
+                                    }
                                 }
                                 
                                 
@@ -623,8 +662,8 @@ public class Compiler {
 				else
 					lexer.nextToken();
 			}
+                        return new AssignExprStatement(leftSide, rightSide, false);
 		}
-		return null;
 	}
 
 	private ExprList realParameters() {
@@ -640,7 +679,14 @@ public class Compiler {
 
 	private WhileStatement whileStatement() {
                 
-                this.currentWhileStatement = true;
+                Boolean firstWhile = false;
+                
+                if(!this.currentWhileStatement)
+                {
+                    firstWhile = true;
+                    this.currentWhileStatement = true;
+                }
+                
                 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.LEFTPAR ) signalError.showError("( expected");
@@ -653,7 +699,8 @@ public class Compiler {
 		lexer.nextToken();
 		Statement s = statement();
                 
-                this.currentWhileStatement = false;
+                if(firstWhile)
+                    this.currentWhileStatement = false;
                 return new WhileStatement(e, s);
 	}
 
@@ -675,6 +722,26 @@ public class Compiler {
 			lexer.nextToken();
 			elsest = statement();
 		}
+                
+                CompositeStatement compStmt;
+                
+                if(st instanceof CompositeStatement)
+                {
+                    compStmt = (CompositeStatement) st;
+                    
+                    int len = compStmt.getSt().getStmtList().size();
+                    Statement lastStmt = null;
+                    
+                    if(len > 0)
+                        lastStmt = compStmt.getSt().getStmtList().get(len-1);
+                    
+                    if ( !(this.currentMethod.getReturnType() instanceof TypeVoid) 
+                         && !(lastStmt instanceof ReturnStatement)){
+                            this.signalError.showError("Missing 'return' statement in method '"
+                                                       + this.currentMethod.getName() + "'");
+                    }
+                }
+                               
                 return new IfStatement(e, st, elsest);
 	}
 
@@ -827,7 +894,8 @@ public class Compiler {
 	}
 
 	private ExprList exprList() {
-		// ExpressionList ::= Expression { "," Expression }
+            
+                // ExpressionList ::= Expression { "," Expression }
 
 		ExprList anExprList = new ExprList();
 		anExprList.addElement(expr());
@@ -846,8 +914,8 @@ public class Compiler {
 				|| op == Symbol.LT || op == Symbol.GE || op == Symbol.GT ) {
 			lexer.nextToken();
 			Expr right = simpleExpr();
-                        
-                        if (left.getType() != right.getType() && (op == Symbol.NEQ || op == Symbol.EQ)){
+                        if (((left.getType() instanceof TypeNull) && (right.getType() instanceof TypeNull))  && ((right.getType().isCompatible(left.getType())) && (op == Symbol.NEQ || op == Symbol.EQ))){
+                            
                             this.signalError.showError("Incompatible types cannot be compared with '!=' because the result will always be 'false'");
                         }
                         
@@ -910,6 +978,7 @@ public class Compiler {
 	}
 
 	private Expr signalFactor() {
+                
 		Symbol op;
 		if ( (op = lexer.token) == Symbol.PLUS || op == Symbol.MINUS ) {
 			lexer.nextToken();
@@ -940,6 +1009,8 @@ public class Compiler {
 		Expr anExpr;
 		ExprList exprList;
 		String messageName, id;
+              
+                
 		switch (lexer.token) {
 		// IntValue
 		case LITERALINT:
@@ -977,6 +1048,8 @@ public class Compiler {
 			// ObjectCreation ::= "new" Id "(" ")"
 		case NEW:
 			lexer.nextToken();
+                        
+                        
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 
@@ -1002,7 +1075,7 @@ public class Compiler {
 			/*
 			 * return an object representing the creation of an object
 			 */
-			return new ObjectDecExpr(className);
+			return new ObjectDecExpr(kclass);
 			/*
           	 * PrimaryExpr ::= "super" "." Id "(" [ ExpressionList ] ")"  | 
           	 *                 Id  |
@@ -1065,6 +1138,9 @@ public class Compiler {
                                 
                                 Variable ident = this.symbolTable.getInLocal(firstId);
                                 
+                                
+                                
+                                
                                 VariableExpr ve = new VariableExpr(ident);
                                 if(ident == null)
                                 {
@@ -1110,6 +1186,7 @@ public class Compiler {
                                                 
                                                 
                                                 KraClass varClass  = this.symbolTable.getInGlobal(varType.getName());
+                                                
                                                 MethodDec amethod = varClass.searchPublicMethod(id);
                                                 
                                                 
@@ -1179,7 +1256,11 @@ public class Compiler {
 			else {
 				lexer.nextToken();
 				if ( lexer.token != Symbol.IDENT )
-					signalError.showError("Identifier expected");
+                                {
+                                                                        System.out.println("asuhaush");
+
+                                    signalError.showError("Identifier expected");
+                                }
 				id = lexer.getStringValue();
 				lexer.nextToken();
 				// j� analisou "this" "." Id
@@ -1214,12 +1295,17 @@ public class Compiler {
                                             }
                                             
                                         }
+                                        
+                                        return new ThisExpr(mred, this.currentClass);
 				}
 				else if ( lexer.token == Symbol.DOT ) {
 					// "this" "." Id "." Id "(" [ ExpressionList ] ")"
 					lexer.nextToken();
 					if ( lexer.token != Symbol.IDENT )
-						signalError.showError("Identifier expected");
+                                        {
+                                            
+                                            signalError.showError("Identifier expected");
+                                        }
 					lexer.nextToken();
 					exprList = this.realParameters();
 				}

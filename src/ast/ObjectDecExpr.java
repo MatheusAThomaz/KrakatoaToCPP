@@ -11,17 +11,17 @@ package ast;
  */
 public class ObjectDecExpr extends Expr {
     
-    private String className;
+    private KraClass classType;
     private Type type;
 
-    public String getClassName() {
-        return className;
+    public KraClass getClassName() {
+        return classType;
     }
     
-    public ObjectDecExpr(String className)
+    public ObjectDecExpr(KraClass classType)
     {
-        this.className = className;
-        this.type = new KraClass(className);
+        this.classType = classType;
+        this.type = classType;
     }
 
     @Override

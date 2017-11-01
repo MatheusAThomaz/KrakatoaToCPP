@@ -11,7 +11,11 @@ import java.util.ArrayList;
  *
  * @author matos
  */
-public class StatementList {
+public class StatementList extends Statement{
+
+    public ArrayList<Statement> getStmtList() {
+        return stmtList;
+    }
     public StatementList() {
         stmtList = new ArrayList<Statement>();
     }
@@ -21,5 +25,17 @@ public class StatementList {
     }
 
     private ArrayList<Statement> stmtList;
+
+    @Override
+    public void genC(PW pw) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    @Override
+    public void genKra(PW pw) {
+        for(Statement st : stmtList){
+            if (st != null) st.genKra(pw);
+        }
+    }
     
 }

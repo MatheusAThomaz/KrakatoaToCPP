@@ -29,6 +29,14 @@ public class ThisExpr extends Expr {
         this.var2 = null;
         this.kraclass = kraclass;
     }
+    
+    public ThisExpr(MethodDec method, KraClass kraclass) {
+        this.method = method;
+        this.var = null;
+        this.var2 = null;
+        this.kraclass = kraclass;
+    }
+
 
     public ThisExpr(KraClass currentClass) {
         this.method = null;

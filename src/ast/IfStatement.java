@@ -18,7 +18,7 @@ public class IfStatement extends Statement{
     public IfStatement(Expr e, Statement st, Statement elsest) {
         this.e = e;
         this.st = st;
-        this.elsest = st;
+        this.elsest = elsest;
     }
 
     @Override
@@ -27,6 +27,25 @@ public class IfStatement extends Statement{
 
     @Override
     public void genKra(PW pw) {
+        pw.printIdent("if (");
+        e.genKra(pw);
+        pw.println(") {");
+        
+        pw.add();
+        st.genKra(pw);
+        pw.sub();
+        
+        pw.printlnIdent("}");
+        if (this.elsest != null){
+            pw.printIdent("else {");
+            
+            pw.add();
+            elsest.genKra(pw);
+            pw.sub();
+        
+            pw.printlnIdent("}");
+        }
+        
     }
     
 }

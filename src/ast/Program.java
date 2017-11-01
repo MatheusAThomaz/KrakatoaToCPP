@@ -14,6 +14,19 @@ public class Program {
 
 
 	public void genKra(PW pw) {
+            int i = 0;
+            
+            for(MetaobjectCall m : this.getMetaobjectCallList())
+            {
+                
+                m.genKra(pw);
+                
+            }
+            
+            for(KraClass kr : this.getClassList())
+            {
+                kr.genKra(pw);
+            }
 	}
 	
 	public ArrayList<KraClass> getClassList() {
