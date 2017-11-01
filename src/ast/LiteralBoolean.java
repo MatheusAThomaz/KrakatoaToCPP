@@ -13,8 +13,13 @@ public class LiteralBoolean extends Expr {
         
     @Override
     public void genKra( PW pw) {
-       pw.print( value ? "1" : "0" );
-    }   
+       pw.print( value ? "true" : "false" );
+    }  
+    
+    @Override
+    public void genKraIdented( PW pw) {
+       pw.print( value ? "true" : "false" );
+    }  
 
     @Override
 	public Type getType() {

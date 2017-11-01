@@ -827,7 +827,16 @@ public class Compiler {
                         this.signalError.showError("Command 'write' does not accept 'boolean' variables");
                     }
                     else if (ex.getExprList().get(i).getType() instanceof KraClass){
-                        this.signalError.showError("Command 'write' does not accept objects");
+                        
+                        if(ex.getExprList().get(i) instanceof ThisExpr)
+                        {
+                            ThisExpr te = (ThisExpr ) ex.getExprList().get(i);
+                            
+                            if(te.getMethod() == null && te.getVar() == null)
+                                this.signalError.showError("Command 'write' does not accept objects");
+                        }
+                        else
+                            this.signalError.showError("Command 'write' does not accept objects");
                     }
                     
                     i++;
