@@ -5,6 +5,8 @@
  */
 package ast;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author matos
@@ -13,19 +15,35 @@ package ast;
 public class AssignExprStatement extends Statement{
     Expr leftside;
     Expr rightside;
+    ArrayList<VariableExpr> vListExpr;
     Boolean isLocalDec;
     
     public AssignExprStatement(Expr l, Expr r, Boolean isLocalDec){
         this.leftside = l;
         this.rightside = r;
         this.isLocalDec = isLocalDec;
+        this.vListExpr = null;
+    }
+    
+    public AssignExprStatement(ArrayList<VariableExpr> vListExpr, Expr r, Boolean isLocalDec){
+        this.leftside = null;
+        this.rightside = r;
+        this.isLocalDec = isLocalDec;
+        this.vListExpr = vListExpr;
     }
     
     public void genKra(PW pw){
         
         if (isLocalDec){
-            pw.printIdent(leftside.getType().getName() + " ");
-            leftside.genKra(pw);
+            if (vListExpr != null) pw.printIdent(vListExpr.get(0).getType().getName() + " ");
+
+            if (vListExpr != null){
+                vListExpr.get(0).genKra(pw);
+                for (int i = 1; i < vListExpr.size(); i++){
+                    pw.print(", ");
+                    vListExpr.get(i).genKra(pw);
+                }
+            }
             pw.println(";");
         }
         else{

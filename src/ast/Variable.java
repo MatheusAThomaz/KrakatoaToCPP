@@ -31,4 +31,13 @@ public class Variable {
 
     private String name;
     private Type type;
+    private String methodName;
+
+    public void setMethodName(String name) {
+        this.methodName = name;
+    }
+
+    public Object getMethodName() {
+        return this.methodName;
+    }
 }

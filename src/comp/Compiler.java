@@ -308,7 +308,10 @@ public class Compiler {
                     }
                 }
                 varMethodCurrent.setMethod(true);
+                
                 this.symbolTable.putInLocal(varMethodCurrent.getName(), varMethodCurrent);
+               
+                
                 
 		lexer.nextToken();
 		if ( lexer.token != Symbol.RIGHTPAR ){
@@ -358,48 +361,53 @@ public class Compiler {
                 
 	}
 
-	private Expr localDec() {
+private ArrayList<VariableExpr> localDec() {
 		// LocalDec ::= Type IdList ";"
                 
 		Type type = type();
                 
+                ArrayList<VariableExpr> vexprList = new ArrayList();
                 
 		if ( lexer.token != Symbol.IDENT ) 
                 {
+                    
                     signalError.showError("Identifier expected");
                 }
                 
                 Variable v = new Variable(lexer.getStringValue(), type);
+                VariableExpr ve = new VariableExpr(v);
+                v.setMethodName(this.currentMethod.getName());
                 
-                if(this.currentMethod != null)
-                {
-                    v.setMethod(true);
-                }
+                vexprList.add(new VariableExpr(v));
                 
                 if (this.symbolTable.getInLocal(v.getName()) != null 
                     && !this.symbolTable.getInLocal(v.getName()).isMethod()
                     && !(this.symbolTable.getInLocal(v.getName()) instanceof InstanceVariable)){
                     
-                    this.signalError.showError("Variable '"
+                    if(this.currentMethod.getName().equals(this.symbolTable.getInLocal(v.getName()).getMethodName()))
+                        this.signalError.showError("Variable '"
                                                + v.getName()
                                                + "' is being redeclared");
                 }
+                
                 this.symbolTable.putInLocal(v.getName(), v);
                 
 		lexer.nextToken();
+                
 		while (lexer.token == Symbol.COMMA) {
 			lexer.nextToken();
 			if ( lexer.token != Symbol.IDENT )
 				signalError.showError("Identifier expected");
 			v = new Variable(lexer.getStringValue(), type);
+                        vexprList.add(new VariableExpr(v));
                         this.symbolTable.putInLocal(v.getName(), v);
 			lexer.nextToken();
 		}
                 
                 if (lexer.token != Symbol.SEMICOLON) 
-                    this.signalError.showError("Unknown character");
+                    this.signalError.showError("Missing ;");
                 
-                return new VariableExpr(v);
+                return vexprList;
 	}
 
 	private ParamList formalParamDec() {
@@ -421,6 +429,9 @@ public class Compiler {
 		if ( lexer.token != Symbol.IDENT ) signalError.showError("Identifier expected");
                 
                 Parameter p = new Parameter(lexer.getStringValue(), t);
+                VariableExpr ve = new VariableExpr(p);
+                System.out.println(ve.getV().getName() + " " + this.currentMethod.getName());
+                p.setMethodName(this.currentMethod.getName());
                 this.symbolTable.putInLocal(p.getName(), p);
 		lexer.nextToken();
                 
@@ -585,23 +596,26 @@ public class Compiler {
 	/*
 	 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec
 	 */
-	private Statement assignExprLocalDec() {
+private Statement assignExprLocalDec() {
                 
+                ArrayList<VariableExpr> vExprList = new ArrayList();
                 Expr leftSide = null;
                 Expr rightSide = null;
 		if ( lexer.token == Symbol.INT || lexer.token == Symbol.BOOLEAN
 				|| lexer.token == Symbol.STRING ||
 				// token � uma classe declarada textualmente antes desta
 				// instru��o
-				(lexer.token == Symbol.IDENT && isType(lexer.getStringValue())) ) {
+				(lexer.token == Symbol.IDENT && isType(lexer.getStringValue()) 
+                                    && this.symbolTable.getInLocal(lexer.getStringValue()) == null) ) {
 			/*
 			 * uma declara��o de vari�vel. 'lexer.token' � o tipo da vari�vel
 			 * 
 			 * AssignExprLocalDec ::= Expression [ ``$=$'' Expression ] | LocalDec 
 			 * LocalDec ::= Type IdList ``;''
 			 */
-			leftSide = localDec();
-                        return new AssignExprStatement(leftSide, rightSide, true);
+                        
+			vExprList = localDec();
+                        return new AssignExprStatement(vExprList, rightSide, true);
 		}
 		else {
 			/*
@@ -922,10 +936,14 @@ public class Compiler {
 		if ( op == Symbol.EQ || op == Symbol.NEQ || op == Symbol.LE
 				|| op == Symbol.LT || op == Symbol.GE || op == Symbol.GT ) {
 			lexer.nextToken();
-			Expr right = simpleExpr();
-                        if (((left.getType() instanceof TypeNull) && (right.getType() instanceof TypeNull))  && ((right.getType().isCompatible(left.getType())) && (op == Symbol.NEQ || op == Symbol.EQ))){
+			Expr right = simpleExpr();                        
+                        if ((!(right.getType().isCompatible(left.getType())) && !(left.getType().isCompatible(right.getType())) && (op == Symbol.NEQ || op == Symbol.EQ))){
                             
-                            this.signalError.showError("Incompatible types cannot be compared with '!=' because the result will always be 'false'");
+                            System.out.println("ola");
+                            if(!((left.getType() instanceof TypeNull) || (right.getType() instanceof TypeNull)))
+                            {
+                                this.signalError.showError("Incompatible types cannot be compared with '!=' because the result will always be 'false'");
+                            }
                         }
                         
 			left = new CompositeExpr(left, op, right);
@@ -1056,11 +1074,15 @@ public class Compiler {
 			return new UnaryExpr(anExpr, Symbol.NOT);
 			// ObjectCreation ::= "new" Id "(" ")"
 		case NEW:
+                                                
 			lexer.nextToken();
                         
                         
 			if ( lexer.token != Symbol.IDENT )
-				signalError.showError("Identifier expected");
+                        {
+
+                            signalError.showError("Identifier expected");
+                        }
 
 			String className = lexer.getStringValue();
                         
@@ -1098,6 +1120,7 @@ public class Compiler {
 			 */
 		case SUPER:
 			// "super" "." Id "(" [ ExpressionList ] ")"
+                        MethodDec mred2;
 			lexer.nextToken();
 			if ( lexer.token != Symbol.DOT ) {
 				signalError.showError("'.' expected");
@@ -1124,10 +1147,12 @@ public class Compiler {
                             signalError.showError("Method '" + messageName + "' was not found in the public interface of '" + this.currentClass.getCname() + "' or its superclasses");
                         }
                         
+                        mred2 = this.currentClass.searchSuperMethod(messageName);
+                        
 			lexer.nextToken();
 			exprList = realParameters();
-                        
-                        return new SuperExpr(this.currentMethod, this.currentClass, exprList);
+    
+                        return new SuperExpr(mred2, this.currentClass, exprList);
 		case IDENT:
 			/*
           	 * PrimaryExpr ::=  
@@ -1298,9 +1323,14 @@ public class Compiler {
                                         
                                         if (exprList != null){
                                             for (int i = 0; i < exprList.getSize(); i++){
+                                                
+                                                KraClass kr;
+                                                
                                                 if (mred.getParamList() == null || mred.getParamList().getArray().get(i) == null ||
-                                                    mred.getParamList().getArray().get(i).getType() != exprList.getExprList().get(i).getType())
+                                                    ! exprList.getExprList().get(i).getType().isCompatible(mred.getParamList().getArray().get(i).getType()))
+                                                {
                                                     this.signalError.showError("Type error: the type of the real parameter is not subclass of the type of the formal parameter");
+                                                }
                                             }
                                             
                                         }
