@@ -47,4 +47,21 @@ public class SuperExpr extends Expr {
         pw.print(")");
     }
     
+    @Override
+    public void genKraIdented(PW pw)
+    {
+        pw.printIdent("super." + this.method.getName() + "(");
+        
+        if(exprList != null)
+        {
+            exprList.getExprList().get(0).genKra(pw);
+            for(int i = 1; i < exprList.getExprList().size(); i++)
+            {
+                exprList.getExprList().get(i).genKra(pw);
+            }
+        }
+        
+        pw.print(")");
+    }
+    
 }

@@ -23,7 +23,7 @@ public class WritelnStatement extends Statement{
 
     @Override
     public void genKra(PW pw) {
-        pw.printIdent("writeln( ");
+        pw.printIdent("writeln(");
         
         ex.getExprList().get(0).genKra(pw);
         for(int i = 1; i < this.ex.getExprList().size(); i++)

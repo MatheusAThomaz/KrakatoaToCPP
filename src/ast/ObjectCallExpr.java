@@ -88,7 +88,6 @@ public class ObjectCallExpr extends Expr {
                 pw.print(")");
            }
            else if(variable != null){
-               System.out.println("ACABAAAAAAAA");
                 pw.printIdent(variable.getName() + "." + method.getName() + "(");
 
                 if(expr != null)

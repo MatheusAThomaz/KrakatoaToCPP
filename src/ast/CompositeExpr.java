@@ -27,7 +27,45 @@ public class CompositeExpr extends Expr {
         if ( putParenthesis )
           pw.print(")");
     }
+        
+        
+    @Override
+    public void genKra(PW pw){
+        left.genKra(pw);
+        
+        String strSymbol = arrayOper.get(oper);
+        if (strSymbol != null){
+            pw.print(" " + strSymbol + " ");
+        }
+        
+        right.genKra(pw);
+        
+    }
+    
+    @Override
+    public void genKraIdented(PW pw){
+        left.genKra(pw);
+        
+        String strSymbol = arrayOper.get(oper);
+        if (strSymbol != null){
+            pw.print(" " + strSymbol + " ");
+        }
+        
+        right.genKra(pw);
+        
+    }
 
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     @Override
 	public Type getType() {
           // left and right must be the same type

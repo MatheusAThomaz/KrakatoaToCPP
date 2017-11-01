@@ -14,5 +14,17 @@ public class LiteralString extends Expr {
         return Type.stringType;
     }
     
+    @Override
+    public void genKra(PW pw){
+        char aspas = 34;
+        pw.print(aspas + this.literalString + aspas);
+    }
+    
+    @Override
+    public void genKraIdented(PW pw){
+        char aspas = 34;
+        pw.printIdent(aspas + this.literalString + aspas);
+    }
+    
     private String literalString;
 }

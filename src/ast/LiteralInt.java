@@ -13,6 +13,14 @@ public class LiteralInt extends Expr {
         pw.printIdent("" + value);
     }
     
+    public void genKra(PW pw){
+        pw.print("" + this.value);
+    }
+    
+    public void genKraIdented(PW pw){
+        pw.printIdent("" + this.value);
+    }
+    
     public Type getType() {
         return Type.intType;
     }

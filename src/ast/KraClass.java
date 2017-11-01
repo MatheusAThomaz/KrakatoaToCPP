@@ -19,7 +19,9 @@ public class KraClass extends Type {
    
    public void genKra(PW pw)
    {
-      pw.println("class " + this.getCname() + " {");
+      pw.print("class " + this.getCname() + " ");
+      if (this.superclass != null) pw.println("extends " + this.superclass.getCname() + " {");
+      else pw.println("{");
       pw.println("");
       
       pw.add();
