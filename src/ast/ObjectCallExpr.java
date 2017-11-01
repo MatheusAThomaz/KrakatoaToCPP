@@ -16,7 +16,95 @@ public class ObjectCallExpr extends Expr {
     private Variable variable;
     private Variable variable2;
     private ExprList expr;
+    
+    public void genKra(PW pw)
+    {
+        
+       if(method == null && variable2 != null)
+       {
+           pw.print(variable.getName() + "." + variable2.getName());
+       }
+       else if(method != null)
+       {
+           if(variable2 != null)
+           {
+                pw.print(variable.getName() + "." + variable2.getName() + method.getName() + "(");
+                
+                if(expr != null)
+                {
+                    expr.getExprList().get(0).genKra(pw);
+                    for(int i = 1; i < expr.getExprList().size(); i++)
+                     {
+                         expr.getExprList().get(i).genKra(pw);
+                     }
+                }
+                
+                pw.print(")");
+           }
+           else if(variable != null){
+               
+                pw.print(variable.getName() + "." + method.getName() + "(");
 
+                if(expr != null)
+                {
+                    expr.getExprList().get(0).genKra(pw);
+                    for(int i = 1; i < expr.getExprList().size(); i++)
+                     {
+                         expr.getExprList().get(i).genKra(pw);
+                     }
+                }
+
+                pw.print(")");
+           }
+       }
+    }
+    
+    @Override
+    public void genKraIdented(PW pw)
+    {
+        
+       if(method == null && variable2 != null)
+       {
+           
+           pw.printIdent(variable.getName() + "." + variable2.getName());
+       }
+       else if(method != null)
+       {
+           
+           if(variable2 != null)
+           {
+               
+                pw.printIdent(variable.getName() + "." + variable2.getName() + method.getName() + "(");
+                
+                if(expr != null)
+                {
+                    expr.getExprList().get(0).genKra(pw);
+                    for(int i = 1; i < expr.getExprList().size(); i++)
+                     {
+                         expr.getExprList().get(i).genKra(pw);
+                     }
+                }
+                
+                pw.print(")");
+           }
+           else if(variable != null){
+               System.out.println("ACABAAAAAAAA");
+                pw.printIdent(variable.getName() + "." + method.getName() + "(");
+
+                if(expr != null)
+                {
+                    expr.getExprList().get(0).genKra(pw);
+                    for(int i = 1; i < expr.getExprList().size(); i++)
+                     {
+                         expr.getExprList().get(i).genKra(pw);
+                     }
+                }
+
+                pw.print(")");
+           }
+       }
+    }
+    
     public MethodDec getMethod() {
         return method;
     }
@@ -38,25 +126,14 @@ public class ObjectCallExpr extends Expr {
         return expr;
     }
     
-    
-    public ObjectCallExpr(MethodDec method, String className, ExprList expr)
-    {
-        this.method = method;
-        this.className = className;
-        this.variable = null;
-        this.expr = expr;
-        this.variable2 = null;
-        
-    }
-    
-    public ObjectCallExpr (Variable variable, String className)
-    {
-        this.method = null;
-        this.className = className;
-        this.variable = variable;
-        this.expr = null;
+    public ObjectCallExpr(Variable var, MethodDec amethod, ExprList exprList) {
+        this.method = amethod;
+        this.className = null;
+        this.variable = var;
+        this.expr = exprList;
         this.variable2 = null;
     }
+    
     
     public ObjectCallExpr (Variable variable, Variable variable2, String className)
     {

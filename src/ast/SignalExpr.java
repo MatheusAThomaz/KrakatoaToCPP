@@ -8,6 +8,12 @@ public class SignalExpr extends Expr {
        this.oper = oper;
        this.expr = expr;
     }
+    
+    public void genKra(PW pw)
+    {
+        pw.print(oper == Symbol.PLUS ? "+" : "-");
+        expr.genKra(pw);
+    }
 
     @Override
 	public void genC( PW pw, boolean putParenthesis ) {

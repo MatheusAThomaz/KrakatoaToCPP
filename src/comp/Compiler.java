@@ -1118,7 +1118,7 @@ public class Compiler {
 			lexer.nextToken();
 			exprList = realParameters();
                         
-                        return new SuperExpr(this.currentMethod, this.currentClass);
+                        return new SuperExpr(this.currentMethod, this.currentClass, exprList);
 		case IDENT:
 			/*
           	 * PrimaryExpr ::=  
@@ -1207,10 +1207,10 @@ public class Compiler {
                                                     this.signalError.showError("Method '" + amethod.getName() + "' was not found in the public interface of '" + varClass.getCname() + "' or its superclasses");
                                                 }
                                                 
-                                                
+                                                  
 						exprList = this.realParameters();
-                                                ObjectCallExpr obj = new ObjectCallExpr(amethod, firstId, exprList);
                                                 
+                                                ObjectCallExpr obj = new ObjectCallExpr(var, amethod, exprList);
                                                 
                                                 return obj;
 						/*
@@ -1236,7 +1236,7 @@ public class Compiler {
 					}
 				}
 			}
-			break;
+			
 		case THIS:
 			/*
 			 * Este 'case THIS:' trata os seguintes casos: 
@@ -1266,7 +1266,7 @@ public class Compiler {
 				// j� analisou "this" "." Id
                                 Variable var = this.symbolTable.getInLocal(id);
                                 VariableExpr varExpr = new VariableExpr(var);
-                                MethodDec mred;
+                                MethodDec mred = null;
                                 
                                 
 				if ( lexer.token == Symbol.LEFTPAR ) {
@@ -1296,7 +1296,7 @@ public class Compiler {
                                             
                                         }
                                         
-                                        return new ThisExpr(mred, this.currentClass);
+                                        return new ThisExpr(mred, this.currentClass, exprList);
 				}
 				else if ( lexer.token == Symbol.DOT ) {
 					// "this" "." Id "." Id "(" [ ExpressionList ] ")"
@@ -1308,6 +1308,8 @@ public class Compiler {
                                         }
 					lexer.nextToken();
 					exprList = this.realParameters();
+                                        
+                                        return new ThisExpr(mred,this.currentClass, varExpr, exprList);
 				}
 				else {
 					// retorne o objeto da ASA que representa "this" "." Id
@@ -1319,7 +1321,7 @@ public class Compiler {
 					return new ThisExpr(varExpr, this.currentClass);
 				}
 			}
-			break;
+			
 		default:
 			this.signalError.showError("Expression expected");
 		}

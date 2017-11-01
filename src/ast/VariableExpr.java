@@ -5,6 +5,10 @@ public class VariableExpr extends Expr {
     public VariableExpr( Variable v ) {
         this.v = v;
     }
+
+    public Variable getV() {
+        return v;
+    }
     
     public void genC( PW pw, boolean putParenthesis ) {
         pw.print( v.getName() );

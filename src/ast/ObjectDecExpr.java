@@ -18,6 +18,11 @@ public class ObjectDecExpr extends Expr {
         return classType;
     }
     
+    public void genKra(PW pw)
+    {
+        pw.print("new " + classType.getName() + "()");
+    }
+    
     public ObjectDecExpr(KraClass classType)
     {
         this.classType = classType;

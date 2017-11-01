@@ -28,11 +28,9 @@ public class ReturnStatement extends Statement{
 
     @Override
     public void genKra(PW pw) {
-        
         pw.printIdent("return ");
         expr.genKra(pw);
-        pw.println();
-        
+        pw.println(";");        
     }
     
 }

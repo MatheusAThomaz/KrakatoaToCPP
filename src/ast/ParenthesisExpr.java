@@ -6,6 +6,13 @@ public class ParenthesisExpr extends Expr {
         this.expr = expr;
     }
     
+    public void genKra(PW pw)
+    {
+        pw.print("(");
+        expr.genKra(pw);
+        pw.print(")");
+    }
+    
     public void genC( PW pw, boolean putParenthesis ) {
         pw.print("(");
         expr.genC(pw, false);

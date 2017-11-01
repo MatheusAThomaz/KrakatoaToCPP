@@ -29,11 +29,18 @@ public class AssignExprStatement extends Statement{
             pw.println(";");
         }
         else{
+            
             leftside.genKraIdented(pw);
             if (rightside != null){
                 pw.print(" = ");
                 rightside.genKra(pw);
+                pw.println(";");
             }
+            
+            if(rightside == null)
+                pw.println(";");
+            
+            
         }
     }
     

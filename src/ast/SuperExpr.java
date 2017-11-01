@@ -13,10 +13,12 @@ public class SuperExpr extends Expr {
 
     private MethodDec method;
     private KraClass kraClass;
+    private ExprList exprList;
     
-    public SuperExpr(MethodDec method, KraClass kraClass){
+    public SuperExpr(MethodDec method, KraClass kraClass, ExprList expr){
         this.method = method;
         this.kraClass = kraClass;
+        this.exprList = expr;
     }
     
     @Override
@@ -27,6 +29,22 @@ public class SuperExpr extends Expr {
     @Override
     public Type getType() {
         return this.method.getReturnType();
+    }
+    
+    public void genKra(PW pw)
+    {
+        pw.print("super." + this.method.getName() + "(");
+        
+        if(exprList != null)
+        {
+            exprList.getExprList().get(0).genKra(pw);
+            for(int i = 1; i < exprList.getExprList().size(); i++)
+            {
+                exprList.getExprList().get(i).genKra(pw);
+            }
+        }
+        
+        pw.print(")");
     }
     
 }

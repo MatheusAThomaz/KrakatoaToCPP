@@ -9,4 +9,9 @@ public class NullExpr extends Expr {
    public Type getType() {
       return new TypeNull();
    }
+   
+   public void genKra(PW pw)
+   {
+       pw.print("null");
+   }
 }
