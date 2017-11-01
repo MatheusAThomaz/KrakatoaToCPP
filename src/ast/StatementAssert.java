@@ -1,4 +1,10 @@
-package ast;
+/*
+*   Caio Henrique Giacomelli - 620297
+*   Matheus Augusto Thomaz   - 620297
+*/
+
+
+ package ast;
 
 public class StatementAssert extends Statement {
 	public StatementAssert(Expr expr, int lineNumber, String message) {

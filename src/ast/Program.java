@@ -1,4 +1,10 @@
-package ast;
+/*
+*   Caio Henrique Giacomelli - 620297
+*   Matheus Augusto Thomaz   - 620297
+*/
+
+
+ package ast;
 
 import java.util.*;
 import comp.CompilationError;

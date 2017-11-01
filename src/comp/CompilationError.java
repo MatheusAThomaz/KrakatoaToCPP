@@ -1,9 +1,15 @@
-package comp;
+/*
+*   Caio Henrique Giacomelli - 620297
+*   Matheus Augusto Thomaz   - 620297
+*/
+
+
+ package comp;
 
 /**
  * a compilation error
  * 
-   @author José
+   @author Josï¿½
  */
 public class CompilationError {
 

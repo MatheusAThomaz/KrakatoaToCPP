@@ -1,4 +1,10 @@
-package lexer;
+/*
+*   Caio Henrique Giacomelli - 620297
+*   Matheus Augusto Thomaz   - 620297
+*/
+
+
+ package lexer;
 
 import java.util.*;
 

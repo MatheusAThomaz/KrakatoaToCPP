@@ -1,4 +1,10 @@
-package comp;
+/*
+*   Caio Henrique Giacomelli - 620297
+*   Matheus Augusto Thomaz   - 620297
+*/
+
+
+ package comp;
 
 public class CompilerOptions {
     
