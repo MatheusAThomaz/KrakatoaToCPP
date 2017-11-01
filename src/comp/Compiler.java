@@ -402,10 +402,11 @@ private ArrayList<VariableExpr> localDec() {
                         vexprList.add(new VariableExpr(v));
                         this.symbolTable.putInLocal(v.getName(), v);
 			lexer.nextToken();
-		}
+                        
+                }
                 
                 if (lexer.token != Symbol.SEMICOLON) 
-                    this.signalError.showError("Missing ;");
+                    this.signalError.showError("Missing ';'", true);
                 
                 return vexprList;
 	}
@@ -430,7 +431,6 @@ private ArrayList<VariableExpr> localDec() {
                 
                 Parameter p = new Parameter(lexer.getStringValue(), t);
                 VariableExpr ve = new VariableExpr(p);
-                System.out.println(ve.getV().getName() + " " + this.currentMethod.getName());
                 p.setMethodName(this.currentMethod.getName());
                 this.symbolTable.putInLocal(p.getName(), p);
 		lexer.nextToken();
@@ -514,7 +514,7 @@ private ArrayList<VariableExpr> localDec() {
                 if ( !(this.currentMethod.getReturnType() instanceof TypeVoid) 
                          && !hasReturn){
                             this.signalError.showError("Missing 'return' statement in method '"
-                                                       + this.currentMethod.getName() + "'");
+                                                       + this.currentMethod.getName() + "'", true);
                     }
                 return stl;
 	}
@@ -768,11 +768,11 @@ private Statement assignExprLocalDec() {
 		lexer.nextToken();
                 
                 if ( this.currentMethod.getReturnType() == Type.voidType){
-                    this.signalError.showError("This method cannot return a value");
+                    this.signalError.showError("This method cannot return a value", true);
                 }
                 
                 if (! e.getType().isCompatible(this.currentMethod.getReturnType())){
-                    this.signalError.showError("Method return type is not compatible with the expression");
+                    this.signalError.showError("Method return type is not compatible with the expression", true);
                 }
                 
                 
@@ -939,7 +939,6 @@ private Statement assignExprLocalDec() {
 			Expr right = simpleExpr();                        
                         if ((!(right.getType().isCompatible(left.getType())) && !(left.getType().isCompatible(right.getType())) && (op == Symbol.NEQ || op == Symbol.EQ))){
                             
-                            System.out.println("ola");
                             if(!((left.getType() instanceof TypeNull) || (right.getType() instanceof TypeNull)))
                             {
                                 this.signalError.showError("Incompatible types cannot be compared with '!=' because the result will always be 'false'");
@@ -1291,7 +1290,6 @@ private Statement assignExprLocalDec() {
 				lexer.nextToken();
 				if ( lexer.token != Symbol.IDENT )
                                 {
-                                                                        System.out.println("asuhaush");
 
                                     signalError.showError("Identifier expected");
                                 }

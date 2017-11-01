@@ -37,7 +37,7 @@ public class IfStatement extends Statement{
         
         pw.printlnIdent("}");
         if (this.elsest != null){
-            pw.printIdent("else {");
+            pw.printlnIdent("else {");
             
             pw.add();
             elsest.genKra(pw);

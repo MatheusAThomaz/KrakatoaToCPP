@@ -35,6 +35,7 @@ public class ObjectCallExpr extends Expr {
                     expr.getExprList().get(0).genKra(pw);
                     for(int i = 1; i < expr.getExprList().size(); i++)
                      {
+                         pw.print(", ");
                          expr.getExprList().get(i).genKra(pw);
                      }
                 }
@@ -50,6 +51,7 @@ public class ObjectCallExpr extends Expr {
                     expr.getExprList().get(0).genKra(pw);
                     for(int i = 1; i < expr.getExprList().size(); i++)
                      {
+                         pw.print(", ");
                          expr.getExprList().get(i).genKra(pw);
                      }
                 }
@@ -81,6 +83,7 @@ public class ObjectCallExpr extends Expr {
                     expr.getExprList().get(0).genKra(pw);
                     for(int i = 1; i < expr.getExprList().size(); i++)
                      {
+                         pw.print(", ");
                          expr.getExprList().get(i).genKra(pw);
                      }
                 }
@@ -95,6 +98,7 @@ public class ObjectCallExpr extends Expr {
                     expr.getExprList().get(0).genKra(pw);
                     for(int i = 1; i < expr.getExprList().size(); i++)
                      {
+                         pw.print(", ");
                          expr.getExprList().get(i).genKra(pw);
                      }
                 }
