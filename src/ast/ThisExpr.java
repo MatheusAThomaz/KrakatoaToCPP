@@ -112,7 +112,7 @@ public class ThisExpr extends Expr {
     }
     
     @Override
-    public void genKraIdented(PW pw)
+    public void genKraIdented(PW pw, boolean isObj)
     {
         
         if(var != null && this.method != null)

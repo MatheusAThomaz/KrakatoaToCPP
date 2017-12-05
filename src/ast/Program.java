@@ -22,6 +22,9 @@ public class Program {
 	public void genKra(PW pw) {
             int i = 0;
             
+            pw.println("#include <iostream>");
+            pw.println("using namespace std;");
+            
             for(MetaobjectCall m : this.getMetaobjectCallList())
             {
                 

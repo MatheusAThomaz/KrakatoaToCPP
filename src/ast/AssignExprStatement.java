@@ -54,8 +54,11 @@ public class AssignExprStatement extends Statement{
             pw.println(";");
         }
         else{
+            if(leftside.getType() instanceof KraClass)
+                leftside.genKraIdented(pw, true);
+            else
+                leftside.genKraIdented(pw, false);
             
-            leftside.genKraIdented(pw);
             if (rightside != null){
                 pw.print(" = ");
                 rightside.genKra(pw);

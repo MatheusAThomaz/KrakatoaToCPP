@@ -68,7 +68,7 @@ public class ObjectCallExpr extends Expr {
     }
     
     @Override
-    public void genKraIdented(PW pw)
+    public void genKraIdented(PW pw,boolean isObj)
     {
         
        if(method == null && variable2 != null)

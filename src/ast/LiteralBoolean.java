@@ -23,7 +23,7 @@ public class LiteralBoolean extends Expr {
     }  
     
     @Override
-    public void genKraIdented( PW pw) {
+    public void genKraIdented( PW pw,boolean isObj) {
        pw.print( value ? "true" : "false" );
     }  
 

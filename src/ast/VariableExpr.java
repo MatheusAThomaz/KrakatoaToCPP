@@ -26,8 +26,11 @@ public class VariableExpr extends Expr {
     }
     
     @Override
-    public void genKraIdented(PW pw){
-        pw.printIdent(v.getName());
+    public void genKraIdented(PW pw,boolean isObj){
+        if(isObj)
+            pw.printIdent("*" + v.getName());
+        else
+            pw.printIdent(v.getName());
     }
     
     public Type getType() {

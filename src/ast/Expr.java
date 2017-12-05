@@ -14,7 +14,7 @@ abstract public class Expr {
     public void genKra(PW pw) {
     }
     
-    public void genKraIdented(PW pw){
+    public void genKraIdented(PW pw, boolean isObj){
         
     }
 }

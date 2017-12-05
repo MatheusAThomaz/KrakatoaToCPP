@@ -30,9 +30,7 @@ public class MetaobjectCall {
 	}
 	
         public void genKra(PW pw)
-        {
-            pw.println("@"+name);
-            
+        {            
             for(Object obj : this.getParamList())
             {
                     pw.println(obj.toString());

@@ -54,7 +54,7 @@ public class SuperExpr extends Expr {
     }
     
     @Override
-    public void genKraIdented(PW pw)
+    public void genKraIdented(PW pw,boolean isObj)
     {
         pw.printIdent("super." + this.method.getName() + "(");
         

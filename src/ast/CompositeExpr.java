@@ -49,7 +49,7 @@ public class CompositeExpr extends Expr {
     }
     
     @Override
-    public void genKraIdented(PW pw){
+    public void genKraIdented(PW pw,boolean isObj){
         left.genKra(pw);
         
         String strSymbol = arrayOper.get(oper);
