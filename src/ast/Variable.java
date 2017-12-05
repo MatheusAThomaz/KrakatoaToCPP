@@ -20,7 +20,7 @@ public class Variable {
     
     public void genKra(PW pw)
     {
-        pw.print(this.type.getName() + " " + this.getName());
+        pw.printIdent(this.type.getName() + " " + this.getName());
     }
 
     public Type getType() {

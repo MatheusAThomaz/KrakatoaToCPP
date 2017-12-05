@@ -45,7 +45,7 @@ public class MethodDec {
     
     public void genKra(PW pw)
     {
-        pw.printIdent(qualifier.name().toLowerCase() + " "  + this.returnType.getName() + " " + this.getName() + "(");
+        pw.printIdent(this.returnType.getName() + " " + this.getName() + "(");
         if(pList != null)
             pList.genKra(pw);
         pw.print(") {");

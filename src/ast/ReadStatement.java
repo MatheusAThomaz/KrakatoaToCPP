@@ -36,15 +36,15 @@ public class ReadStatement extends Statement{
 
     @Override
     public void genKra(PW pw) {
-        pw.printIdent("read(");
+        pw.printIdent("cin >> ");
         
         pw.print(nameList.get(0));
         for(int i = 1; i < this.nameList.size(); i++)
         {
-            pw.print(", ");
+            pw.print(" >> ");
             pw.print(nameList.get(i));
         }
-        pw.println(");");
+        pw.println(";");
     }
     
 }

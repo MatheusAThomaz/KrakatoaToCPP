@@ -8,7 +8,7 @@
 
 public class TypeBoolean extends Type {
 
-   public TypeBoolean() { super("boolean"); }
+   public TypeBoolean() { super("bool"); }
 
    @Override
    public String getCname() {

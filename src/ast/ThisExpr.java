@@ -74,7 +74,7 @@ public class ThisExpr extends Expr {
         
         if(var != null && this.method != null)
         {
-            pw.print("this." + var.getV().getName() + "." + this.method.getName() + "(");
+            pw.print("this->" + var.getV().getName() + "->" + this.method.getName() + "(");
             
             if(exprList != null)
             {
@@ -89,7 +89,7 @@ public class ThisExpr extends Expr {
         }
         else if(var == null && method != null)
         {
-            pw.print("this." + this.method.getName() + "(");
+            pw.print("this->" + this.method.getName() + "(");
             
             if(exprList != null)
             {
@@ -104,7 +104,7 @@ public class ThisExpr extends Expr {
         }
         else if(var != null && method == null)
         {
-            pw.print("this." + this.getVar().getV().getName());
+            pw.print("this->" + this.getVar().getV().getName());
         }
         else
             pw.print("this");
@@ -117,7 +117,7 @@ public class ThisExpr extends Expr {
         
         if(var != null && this.method != null)
         {
-            pw.printIdent("this." + var.getV().getName() + "." + this.method.getName() + "(");
+            pw.printIdent("this->" + var.getV().getName() + "->" + this.method.getName() + "(");
             
             if(exprList != null)
             {
@@ -132,7 +132,7 @@ public class ThisExpr extends Expr {
         }
         else if(var == null && method != null)
         {
-            pw.printIdent("this." + this.method.getName() + "(");
+            pw.printIdent("this->" + this.method.getName() + "(");
             
             if(exprList != null)
             {
@@ -147,7 +147,7 @@ public class ThisExpr extends Expr {
         }
         else if(var != null && method == null)
         {
-            pw.printIdent("this." + this.getVar().getV().getName());
+            pw.printIdent("this->" + this.getVar().getV().getName());
         }
         else
             pw.printIdent("this");

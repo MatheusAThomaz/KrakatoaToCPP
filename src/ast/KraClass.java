@@ -26,27 +26,47 @@ public class KraClass extends Type {
    public void genKra(PW pw)
    {
       pw.print("class " + this.getCname() + " ");
-      if (this.superclass != null) pw.println("extends " + this.superclass.getCname() + " {");
+      if (this.superclass != null) pw.println("public: " + this.superclass.getCname() + " {");
       else pw.println("{");
       pw.println("");
       
       pw.add();
       
-      for(InstanceVariable inst : this.getInstanceVar())
-      {
-          inst.genKra(pw);
+      if (!this.getInstanceVar().isEmpty()){
+            pw.printlnIdent("private:");
+            pw.add();
+            for(InstanceVariable inst : this.getInstanceVar())
+            {
+                inst.genKra(pw);
+            }
+
+            pw.println();
+
+            for(MethodDec method : this.getPublicMethodList())
+            {
+                if (method.getQualifier().name().toLowerCase().equals("private"))
+                        method.genKra(pw);
+            }
+
+            pw.println();
+            pw.sub();
       }
       
-      for(MethodDec method : this.getPublicMethodList())
-      {
-          method.genKra(pw);
+      if (!this.getPublicMethodList().isEmpty()){
+            pw.printlnIdent("public:");
+            pw.add();
+
+            for(MethodDec method : this.getPublicMethodList())
+            {
+                if (method.getQualifier().name().toLowerCase().equals("public"))
+                        method.genKra(pw);
+            }
+
+            pw.sub();
       }
-      
-      pw.println();
-      
       
       pw.sub();
-      pw.println("}");
+      pw.println("};");
       pw.println();
    }
 
