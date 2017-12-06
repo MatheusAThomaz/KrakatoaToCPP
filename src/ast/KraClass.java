@@ -25,16 +25,25 @@ public class KraClass extends Type {
    
    public void genKra(PW pw)
    {
-      pw.print("class " + this.getCname() + " ");
-      if (this.superclass != null) pw.println("public: " + this.superclass.getCname() + " {");
-      else pw.println("{");
+      pw.print("class " + this.getCname());
+      if (this.superclass != null) pw.println(": public " + this.superclass.getCname() + " {");
+      else pw.println(" {");
       pw.println("");
       
+      
+      
       pw.add();
+      
+      if (this.superclass != null){ 
+            pw.printlnIdent("typedef " + this.superclass.getCname() + " super;");
+            pw.println();
+      }
       
       if (!this.getInstanceVar().isEmpty()){
             pw.printlnIdent("private:");
             pw.add();
+            
+            
             for(InstanceVariable inst : this.getInstanceVar())
             {
                 inst.genKra(pw);
@@ -44,8 +53,12 @@ public class KraClass extends Type {
 
             for(MethodDec method : this.getPublicMethodList())
             {
-                if (method.getQualifier().name().toLowerCase().equals("private"))
-                        method.genKra(pw);
+                if (method.getQualifier().name().toLowerCase().equals("private")){
+                        if (method.getName().equals(this.name))
+                            method.genKra(pw, true);
+                        else 
+                            method.genKra(pw, false);
+                }
             }
 
             pw.println();
@@ -58,8 +71,13 @@ public class KraClass extends Type {
 
             for(MethodDec method : this.getPublicMethodList())
             {
-                if (method.getQualifier().name().toLowerCase().equals("public"))
-                        method.genKra(pw);
+                if (method.getQualifier().name().toLowerCase().equals("public")){
+                    
+                        if (method.getName().equals(this.getName()))
+                            method.genKra(pw, true);
+                        else 
+                            method.genKra(pw, false);
+                }
             }
 
             pw.sub();

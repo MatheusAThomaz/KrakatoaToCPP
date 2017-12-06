@@ -28,13 +28,19 @@ public class ObjectCallExpr extends Expr {
         
        if(method == null && variable2 != null)
        {
-           pw.print(variable.getName() + "." + variable2.getName());
+           if (variable.getType() instanceof KraClass)
+                pw.print(variable.getName() + "->" + variable2.getName());
+           else
+               pw.print(variable.getName() + "." + variable2.getName());
        }
        else if(method != null)
        {
            if(variable2 != null)
            {
-                pw.print(variable.getName() + "." + variable2.getName() + method.getName() + "(");
+                if (variable.getType() instanceof KraClass)
+                    pw.print(variable.getName() + "->" + variable2.getName() + method.getName() + "(");
+                else
+                    pw.print(variable.getName() + "." + variable2.getName() + method.getName() + "(");
                 
                 if(expr != null)
                 {
@@ -49,8 +55,10 @@ public class ObjectCallExpr extends Expr {
                 pw.print(")");
            }
            else if(variable != null){
-               
-                pw.print(variable.getName() + "." + method.getName() + "(");
+                if (variable.getType() instanceof KraClass)
+                    pw.print(variable.getName() + "->" + method.getName() + "(");
+                else
+                    pw.print(variable.getName() + "." + method.getName() + "(");
 
                 if(expr != null)
                 {
@@ -74,7 +82,10 @@ public class ObjectCallExpr extends Expr {
        if(method == null && variable2 != null)
        {
            
-           pw.printIdent(variable.getName() + "." + variable2.getName());
+           if (variable.getType() instanceof KraClass)
+                pw.printIdent(variable.getName() + "->" + variable2.getName());
+           else
+               pw.printIdent(variable.getName() + "." + variable2.getName());
        }
        else if(method != null)
        {
@@ -82,7 +93,10 @@ public class ObjectCallExpr extends Expr {
            if(variable2 != null)
            {
                
-                pw.printIdent(variable.getName() + "." + variable2.getName() + method.getName() + "(");
+                if (variable.getType() instanceof KraClass)
+                    pw.printIdent(variable.getName() + "->" + variable2.getName() + method.getName() + "(");
+                else
+                    pw.printIdent(variable.getName() + "." + variable2.getName() + method.getName() + "(");
                 
                 if(expr != null)
                 {
@@ -97,7 +111,10 @@ public class ObjectCallExpr extends Expr {
                 pw.print(")");
            }
            else if(variable != null){
-                pw.printIdent(variable.getName() + "." + method.getName() + "(");
+               if (variable.getType() instanceof KraClass)
+                    pw.printIdent(variable.getName() + "->" + method.getName() + "(");
+                else
+                    pw.printIdent(variable.getName() + "." + method.getName() + "(");
 
                 if(expr != null)
                 {

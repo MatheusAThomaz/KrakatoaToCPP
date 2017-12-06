@@ -39,7 +39,7 @@ public class SuperExpr extends Expr {
     
     public void genKra(PW pw)
     {
-        pw.print("super." + this.method.getName() + "(");
+        pw.print("super::" + this.method.getName() + "(");
         
         if(exprList != null)
         {
@@ -56,7 +56,7 @@ public class SuperExpr extends Expr {
     @Override
     public void genKraIdented(PW pw,boolean isObj)
     {
-        pw.printIdent("super." + this.method.getName() + "(");
+        pw.printIdent("super::" + this.method.getName() + "(");
         
         if(exprList != null)
         {

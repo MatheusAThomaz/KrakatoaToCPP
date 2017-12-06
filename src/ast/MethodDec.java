@@ -19,7 +19,7 @@ import lexer.Symbol;
  */
 public class MethodDec {
 
-    private final String name;
+    private String name;
     private final Type returnType;
     private final Symbol qualifier;
     private ParamList pList;
@@ -43,12 +43,33 @@ public class MethodDec {
         return name;
     }
     
-    public void genKra(PW pw)
+    public void setName(String name) {
+        this.name = name;
+    }
+    
+    public void genKra(PW pw, boolean sameClassName)
     {
         if(this.getName().equals("run"))
             pw.printIdent("int main(");
-        else
-            pw.printIdent(this.returnType.getName() + " " + this.getName() + "(");
+        else{
+            
+            if (this.returnType instanceof KraClass){
+                if (sameClassName){
+                    this.setName(this.getName() + "2");
+                    pw.printIdent(this.returnType.getName() + " *" + this.getName() + "(");
+                }
+                else
+                    pw.printIdent(this.returnType.getName() + " *" + this.getName() + "(");
+            }
+            else{
+                if (sameClassName){
+                    this.setName(this.getName() + "2");
+                    pw.printIdent(this.returnType.getName() + " " + this.getName() + "(");
+                }            
+                else
+                    pw.printIdent(this.returnType.getName() + " " + this.getName() + "(");
+            }
+        }
         
         if(pList != null)
             pList.genKra(pw);

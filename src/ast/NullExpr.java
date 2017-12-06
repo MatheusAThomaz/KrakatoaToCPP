@@ -18,6 +18,6 @@ public class NullExpr extends Expr {
    
    public void genKra(PW pw)
    {
-       pw.print("null");
+       pw.print("NULL");
    }
 }

@@ -14,7 +14,7 @@ public class InstanceVariable extends Variable {
     
     public void genKra(PW pw)
     {
-        super.genKra(pw);
+        super.genKraPointer(pw);
         pw.println(";");
     }
 

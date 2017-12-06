@@ -37,14 +37,20 @@ public class CompositeExpr extends Expr {
         
     @Override
     public void genKra(PW pw){
-        left.genKra(pw);
+       
+        if (left.getType().getName().equals("string") && !right.getType().getName().equals("null"))
+            left.genKraIdented(pw, true);
+        else
+            left.genKra(pw);
         
         String strSymbol = arrayOper.get(oper);
         if (strSymbol != null){
             pw.print(" " + strSymbol + " ");
         }
-        
-        right.genKra(pw);
+        if (right.getType().getName().equals("string") && !left.getType().getName().equals("null"))
+            right.genKraIdented(pw, true);
+        else
+            right.genKra(pw);
         
     }
     

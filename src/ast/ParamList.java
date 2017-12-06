@@ -16,11 +16,11 @@ public class ParamList {
     
     public void genKra(PW pw)
     {
-        paramList.get(0).genKra(pw);
+        paramList.get(0).genKraNOIdented(pw);
         for(int i = 1; i < this.paramList.size(); i++)
         {
             pw.print(", ");
-            paramList.get(i).genKra(pw);
+            paramList.get(i).genKraNOIdented(pw);
         }
     }
 

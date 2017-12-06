@@ -44,18 +44,34 @@ public class AssignExprStatement extends Statement{
         if (isLocalDec){
             if (vListExpr != null) pw.printIdent(vListExpr.get(0).getType().getName() + " ");
 
+            
             if (vListExpr != null){
-                vListExpr.get(0).genKra(pw);
+                
+                if(vListExpr.get(0).getType() instanceof KraClass || vListExpr.get(0).getType().getName().equals("string")){
+                    pw.print("*");
+                    vListExpr.get(0).genKra(pw);
+                }
+                else
+                    vListExpr.get(0).genKra(pw);
+                
                 for (int i = 1; i < vListExpr.size(); i++){
                     pw.print(", ");
-                    vListExpr.get(i).genKra(pw);
+                    if(vListExpr.get(i).getType() instanceof KraClass || vListExpr.get(i).getType().getName().equals("string")){
+                        
+                        pw.print("*");
+                        vListExpr.get(i).genKra(pw);
+                    }
+                    else
+                        vListExpr.get(i).genKra(pw);
                 }
             }
             pw.println(";");
         }
         else{
-            if(leftside.getType() instanceof KraClass)
+            if (leftside.getType().getName().equals("string")){
+                pw.printIdent("");
                 leftside.genKraIdented(pw, true);
+                }
             else
                 leftside.genKraIdented(pw, false);
             

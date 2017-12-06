@@ -27,9 +27,11 @@ public class LiteralString extends Expr {
     }
     
     @Override
-    public void genKraIdented(PW pw,boolean isObj){
+    public void genKraIdented(PW pw, boolean istring){
         char aspas = 34;
-        pw.printIdent(aspas + this.literalString + aspas);
+        if (!istring) pw.printIdent(aspas + this.literalString + aspas);
+        else
+            pw.print(aspas + this.literalString + aspas);
     }
     
     private String literalString;

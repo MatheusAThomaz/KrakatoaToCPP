@@ -9,7 +9,7 @@
 public class TypeString extends Type {
     
     public TypeString() {
-        super("String");
+        super("string");
     }
     
    public String getCname() {

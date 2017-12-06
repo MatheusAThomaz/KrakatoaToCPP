@@ -22,6 +22,21 @@ public class Variable {
     {
         pw.printIdent(this.type.getName() + " " + this.getName());
     }
+    
+    public void genKraNOIdented(PW pw)
+    {
+        if (this.type instanceof KraClass)
+            pw.print(this.type.getName() + " *" + this.getName());
+        else
+            pw.print(this.type.getName() + " " + this.getName());
+    }
+    
+    public void genKraPointer(PW pw){
+        if (this.type instanceof KraClass)
+            pw.printIdent(this.type.getName() + " *" + this.getName());
+        else
+            pw.printIdent(this.type.getName() + " " + this.getName());
+    }
 
     public Type getType() {
         return type; 
